@@ -1,4 +1,4 @@
-// Prisma schema for Better Auth
+// Prisma schema for Better Auth & CESIZen
 // learn more: https://better-auth.com/docs/concepts/database
 
 generator client {
@@ -6,71 +6,79 @@ generator client {
   output   = "../generated/prisma"
 }
 
-// NOTE: When using mysql or sqlserver, uncomment the //@db.Text annotations in model Account below
-// Further reading:
-// https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ==========================================
+// 1. UTILISATEURS & AUTHENTIFICATION (BETTER AUTH)
+// ==========================================
 
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-
-  @@index([name])
+enum Role {
+  USER
+  ADMIN
 }
 
 model User {
-  id            String    @id
-  name          String //@db.Text
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String? //@db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  posts         Post[]
+  id            String  @id @default(uuid())
+  name          String // Requis par Better Auth (concaténation automatique)
+  email         String  @unique
+  emailVerified Boolean // Requis par Better Auth
+  image         String?
 
-  @@unique([email])
+  // Tes champs personnalisés
+  firstName String
+  lastName  String
+  age       Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Champs ajoutés pour CESIZen & RGPD
+  role             Role      @default(USER)
+  isActif          Boolean   @default(true) // Soft-delete : ne jamais supprimer physiquement direct
+  dateConsentement DateTime? // RGPD : Preuve d'acceptation de la politique de confidentialité
+
+  // Relations Better Auth
+  sessions Session[]
+  accounts Account[]
+
+  // Relations CESIZen
+  pagesRedigees       PageInfo[]
+  resultatsDiagnostic ResultatDiagnostic[]
+  journalEmotions     JournalEmotion[]
+
   @@map("user")
 }
 
 model Session {
-  id        String   @id
+  id        String   @id @default(uuid())
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  ipAddress String? //@db.Text
-  userAgent String? //@db.Text
+  ipAddress String?
+  userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@map("session")
 }
 
 model Account {
-  id                    String    @id
-  accountId             String //@db.Text
-  providerId            String //@db.Text
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String? //@db.Text
-  refreshToken          String? //@db.Text
-  idToken               String? //@db.Text
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope                 String? //@db.Text
-  password              String? //@db.Text
+  scope                 String?
+  password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -78,12 +86,110 @@ model Account {
 }
 
 model Verification {
-  id         String   @id
-  identifier String //@db.Text
-  value      String //@db.Text
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  updatedAt  DateTime @updatedAt
 
   @@map("verification")
+}
+
+// ==========================================
+// 2. MODULE : INFORMATIONS (Obligatoire)
+// ==========================================
+
+model PageInfo {
+  id           String   @id @default(uuid())
+  titre        String
+  slug         String   @unique
+  contenu      String   @db.Text
+  dateCreation DateTime @default(now())
+  dateMaj      DateTime @updatedAt
+  isPublie     Boolean  @default(false)
+
+  auteurId String
+  auteur   User   @relation(fields: [auteurId], references: [id])
+
+  @@map("page_info")
+}
+
+model Menu {
+  id             String @id @default(uuid())
+  label          String
+  url            String
+  ordreAffichage Int
+
+  @@map("menu")
+}
+
+// ==========================================
+// 3. MODULE : DIAGNOSTIC DE STRESS (Optionnel 1)
+// ==========================================
+
+model EvenementStress {
+  id          String  @id @default(uuid())
+  description String
+  points      Int
+  isActif     Boolean @default(true)
+
+  reponses ReponseDiagnostic[]
+
+  @@map("evenement_stress")
+}
+
+model ResultatDiagnostic {
+  id             String   @id @default(uuid())
+  dateEvaluation DateTime @default(now())
+  scoreTotal     Int
+  niveauStress   String
+
+  utilisateurId String
+  utilisateur   User   @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  reponses ReponseDiagnostic[]
+
+  @@map("resultat_diagnostic")
+}
+
+model ReponseDiagnostic {
+  resultatId  String
+  evenementId String
+
+  resultat  ResultatDiagnostic @relation(fields: [resultatId], references: [id], onDelete: Cascade)
+  evenement EvenementStress    @relation(fields: [evenementId], references: [id], onDelete: Cascade)
+
+  @@id([resultatId, evenementId])
+  @@map("reponse_diagnostic")
+}
+
+model EmotionNiveau1 {
+  id         String           @id @default(uuid())
+  libelle    String           @unique
+  emotionsN2 EmotionNiveau2[]
+
+  @@map("emotion_niveau_1")
+}
+
+model EmotionNiveau2 {
+  id          String           @id @default(uuid())
+  libelle     String
+  emotionN1Id String
+  emotionN1   EmotionNiveau1   @relation(fields: [emotionN1Id], references: [id], onDelete: Cascade)
+  journaux    JournalEmotion[]
+
+  @@map("emotion_niveau_2")
+}
+
+model JournalEmotion {
+  id                 String         @id @default(uuid())
+  notePersonnelle    String?        @db.Text
+  dateEnregistrement DateTime       @default(now())
+  utilisateurId      String
+  emotionN2Id        String
+  utilisateur        User           @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  emotionN2          EmotionNiveau2 @relation(fields: [emotionN2Id], references: [id])
+
+  @@map("journal_emotion")
 }
