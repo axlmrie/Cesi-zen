@@ -195,3 +195,15 @@ model JournalEmotion {
 
   @@map("journal_emotion")
 }
+model ExerciceRespiration {
+  id             String   @id @default(uuid())
+  titre          String
+  inspirationSec Int
+  expirationSec  Int
+  retenueSec     Int
+  
+  isCustom       Boolean  @default(false)
+  createurId     String?
+
+  @@map("exercice_respiration")
+}

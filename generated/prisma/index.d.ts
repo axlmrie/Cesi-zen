@@ -73,6 +73,11 @@ export type EmotionNiveau2 = $Result.DefaultSelection<Prisma.$EmotionNiveau2Payl
  * 
  */
 export type JournalEmotion = $Result.DefaultSelection<Prisma.$JournalEmotionPayload>
+/**
+ * Model ExerciceRespiration
+ * 
+ */
+export type ExerciceRespiration = $Result.DefaultSelection<Prisma.$ExerciceRespirationPayload>
 
 /**
  * Enums
@@ -328,6 +333,16 @@ export class PrismaClient<
     * ```
     */
   get journalEmotion(): Prisma.JournalEmotionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.exerciceRespiration`: Exposes CRUD operations for the **ExerciceRespiration** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ExerciceRespirations
+    * const exerciceRespirations = await prisma.exerciceRespiration.findMany()
+    * ```
+    */
+  get exerciceRespiration(): Prisma.ExerciceRespirationDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -780,7 +795,8 @@ export namespace Prisma {
     ReponseDiagnostic: 'ReponseDiagnostic',
     EmotionNiveau1: 'EmotionNiveau1',
     EmotionNiveau2: 'EmotionNiveau2',
-    JournalEmotion: 'JournalEmotion'
+    JournalEmotion: 'JournalEmotion',
+    ExerciceRespiration: 'ExerciceRespiration'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -799,7 +815,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "session" | "account" | "verification" | "pageInfo" | "menu" | "evenementStress" | "resultatDiagnostic" | "reponseDiagnostic" | "emotionNiveau1" | "emotionNiveau2" | "journalEmotion"
+      modelProps: "user" | "session" | "account" | "verification" | "pageInfo" | "menu" | "evenementStress" | "resultatDiagnostic" | "reponseDiagnostic" | "emotionNiveau1" | "emotionNiveau2" | "journalEmotion" | "exerciceRespiration"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1691,6 +1707,80 @@ export namespace Prisma {
           }
         }
       }
+      ExerciceRespiration: {
+        payload: Prisma.$ExerciceRespirationPayload<ExtArgs>
+        fields: Prisma.ExerciceRespirationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ExerciceRespirationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ExerciceRespirationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload>
+          }
+          findFirst: {
+            args: Prisma.ExerciceRespirationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ExerciceRespirationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload>
+          }
+          findMany: {
+            args: Prisma.ExerciceRespirationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload>[]
+          }
+          create: {
+            args: Prisma.ExerciceRespirationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload>
+          }
+          createMany: {
+            args: Prisma.ExerciceRespirationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ExerciceRespirationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload>[]
+          }
+          delete: {
+            args: Prisma.ExerciceRespirationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload>
+          }
+          update: {
+            args: Prisma.ExerciceRespirationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload>
+          }
+          deleteMany: {
+            args: Prisma.ExerciceRespirationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ExerciceRespirationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ExerciceRespirationUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload>[]
+          }
+          upsert: {
+            args: Prisma.ExerciceRespirationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ExerciceRespirationPayload>
+          }
+          aggregate: {
+            args: Prisma.ExerciceRespirationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateExerciceRespiration>
+          }
+          groupBy: {
+            args: Prisma.ExerciceRespirationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ExerciceRespirationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ExerciceRespirationCountArgs<ExtArgs>
+            result: $Utils.Optional<ExerciceRespirationCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1799,6 +1889,7 @@ export namespace Prisma {
     emotionNiveau1?: EmotionNiveau1Omit
     emotionNiveau2?: EmotionNiveau2Omit
     journalEmotion?: JournalEmotionOmit
+    exerciceRespiration?: ExerciceRespirationOmit
   }
 
   /* Types for Logging */
@@ -15169,6 +15260,1069 @@ export namespace Prisma {
 
 
   /**
+   * Model ExerciceRespiration
+   */
+
+  export type AggregateExerciceRespiration = {
+    _count: ExerciceRespirationCountAggregateOutputType | null
+    _avg: ExerciceRespirationAvgAggregateOutputType | null
+    _sum: ExerciceRespirationSumAggregateOutputType | null
+    _min: ExerciceRespirationMinAggregateOutputType | null
+    _max: ExerciceRespirationMaxAggregateOutputType | null
+  }
+
+  export type ExerciceRespirationAvgAggregateOutputType = {
+    inspirationSec: number | null
+    expirationSec: number | null
+    retenueSec: number | null
+  }
+
+  export type ExerciceRespirationSumAggregateOutputType = {
+    inspirationSec: number | null
+    expirationSec: number | null
+    retenueSec: number | null
+  }
+
+  export type ExerciceRespirationMinAggregateOutputType = {
+    id: string | null
+    titre: string | null
+    inspirationSec: number | null
+    expirationSec: number | null
+    retenueSec: number | null
+    isCustom: boolean | null
+    createurId: string | null
+  }
+
+  export type ExerciceRespirationMaxAggregateOutputType = {
+    id: string | null
+    titre: string | null
+    inspirationSec: number | null
+    expirationSec: number | null
+    retenueSec: number | null
+    isCustom: boolean | null
+    createurId: string | null
+  }
+
+  export type ExerciceRespirationCountAggregateOutputType = {
+    id: number
+    titre: number
+    inspirationSec: number
+    expirationSec: number
+    retenueSec: number
+    isCustom: number
+    createurId: number
+    _all: number
+  }
+
+
+  export type ExerciceRespirationAvgAggregateInputType = {
+    inspirationSec?: true
+    expirationSec?: true
+    retenueSec?: true
+  }
+
+  export type ExerciceRespirationSumAggregateInputType = {
+    inspirationSec?: true
+    expirationSec?: true
+    retenueSec?: true
+  }
+
+  export type ExerciceRespirationMinAggregateInputType = {
+    id?: true
+    titre?: true
+    inspirationSec?: true
+    expirationSec?: true
+    retenueSec?: true
+    isCustom?: true
+    createurId?: true
+  }
+
+  export type ExerciceRespirationMaxAggregateInputType = {
+    id?: true
+    titre?: true
+    inspirationSec?: true
+    expirationSec?: true
+    retenueSec?: true
+    isCustom?: true
+    createurId?: true
+  }
+
+  export type ExerciceRespirationCountAggregateInputType = {
+    id?: true
+    titre?: true
+    inspirationSec?: true
+    expirationSec?: true
+    retenueSec?: true
+    isCustom?: true
+    createurId?: true
+    _all?: true
+  }
+
+  export type ExerciceRespirationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ExerciceRespiration to aggregate.
+     */
+    where?: ExerciceRespirationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ExerciceRespirations to fetch.
+     */
+    orderBy?: ExerciceRespirationOrderByWithRelationInput | ExerciceRespirationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ExerciceRespirationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ExerciceRespirations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ExerciceRespirations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ExerciceRespirations
+    **/
+    _count?: true | ExerciceRespirationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ExerciceRespirationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ExerciceRespirationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ExerciceRespirationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ExerciceRespirationMaxAggregateInputType
+  }
+
+  export type GetExerciceRespirationAggregateType<T extends ExerciceRespirationAggregateArgs> = {
+        [P in keyof T & keyof AggregateExerciceRespiration]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateExerciceRespiration[P]>
+      : GetScalarType<T[P], AggregateExerciceRespiration[P]>
+  }
+
+
+
+
+  export type ExerciceRespirationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ExerciceRespirationWhereInput
+    orderBy?: ExerciceRespirationOrderByWithAggregationInput | ExerciceRespirationOrderByWithAggregationInput[]
+    by: ExerciceRespirationScalarFieldEnum[] | ExerciceRespirationScalarFieldEnum
+    having?: ExerciceRespirationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ExerciceRespirationCountAggregateInputType | true
+    _avg?: ExerciceRespirationAvgAggregateInputType
+    _sum?: ExerciceRespirationSumAggregateInputType
+    _min?: ExerciceRespirationMinAggregateInputType
+    _max?: ExerciceRespirationMaxAggregateInputType
+  }
+
+  export type ExerciceRespirationGroupByOutputType = {
+    id: string
+    titre: string
+    inspirationSec: number
+    expirationSec: number
+    retenueSec: number
+    isCustom: boolean
+    createurId: string | null
+    _count: ExerciceRespirationCountAggregateOutputType | null
+    _avg: ExerciceRespirationAvgAggregateOutputType | null
+    _sum: ExerciceRespirationSumAggregateOutputType | null
+    _min: ExerciceRespirationMinAggregateOutputType | null
+    _max: ExerciceRespirationMaxAggregateOutputType | null
+  }
+
+  type GetExerciceRespirationGroupByPayload<T extends ExerciceRespirationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ExerciceRespirationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ExerciceRespirationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ExerciceRespirationGroupByOutputType[P]>
+            : GetScalarType<T[P], ExerciceRespirationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ExerciceRespirationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    titre?: boolean
+    inspirationSec?: boolean
+    expirationSec?: boolean
+    retenueSec?: boolean
+    isCustom?: boolean
+    createurId?: boolean
+  }, ExtArgs["result"]["exerciceRespiration"]>
+
+  export type ExerciceRespirationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    titre?: boolean
+    inspirationSec?: boolean
+    expirationSec?: boolean
+    retenueSec?: boolean
+    isCustom?: boolean
+    createurId?: boolean
+  }, ExtArgs["result"]["exerciceRespiration"]>
+
+  export type ExerciceRespirationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    titre?: boolean
+    inspirationSec?: boolean
+    expirationSec?: boolean
+    retenueSec?: boolean
+    isCustom?: boolean
+    createurId?: boolean
+  }, ExtArgs["result"]["exerciceRespiration"]>
+
+  export type ExerciceRespirationSelectScalar = {
+    id?: boolean
+    titre?: boolean
+    inspirationSec?: boolean
+    expirationSec?: boolean
+    retenueSec?: boolean
+    isCustom?: boolean
+    createurId?: boolean
+  }
+
+  export type ExerciceRespirationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "titre" | "inspirationSec" | "expirationSec" | "retenueSec" | "isCustom" | "createurId", ExtArgs["result"]["exerciceRespiration"]>
+
+  export type $ExerciceRespirationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ExerciceRespiration"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      titre: string
+      inspirationSec: number
+      expirationSec: number
+      retenueSec: number
+      isCustom: boolean
+      createurId: string | null
+    }, ExtArgs["result"]["exerciceRespiration"]>
+    composites: {}
+  }
+
+  type ExerciceRespirationGetPayload<S extends boolean | null | undefined | ExerciceRespirationDefaultArgs> = $Result.GetResult<Prisma.$ExerciceRespirationPayload, S>
+
+  type ExerciceRespirationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ExerciceRespirationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ExerciceRespirationCountAggregateInputType | true
+    }
+
+  export interface ExerciceRespirationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ExerciceRespiration'], meta: { name: 'ExerciceRespiration' } }
+    /**
+     * Find zero or one ExerciceRespiration that matches the filter.
+     * @param {ExerciceRespirationFindUniqueArgs} args - Arguments to find a ExerciceRespiration
+     * @example
+     * // Get one ExerciceRespiration
+     * const exerciceRespiration = await prisma.exerciceRespiration.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ExerciceRespirationFindUniqueArgs>(args: SelectSubset<T, ExerciceRespirationFindUniqueArgs<ExtArgs>>): Prisma__ExerciceRespirationClient<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ExerciceRespiration that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ExerciceRespirationFindUniqueOrThrowArgs} args - Arguments to find a ExerciceRespiration
+     * @example
+     * // Get one ExerciceRespiration
+     * const exerciceRespiration = await prisma.exerciceRespiration.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ExerciceRespirationFindUniqueOrThrowArgs>(args: SelectSubset<T, ExerciceRespirationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ExerciceRespirationClient<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ExerciceRespiration that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExerciceRespirationFindFirstArgs} args - Arguments to find a ExerciceRespiration
+     * @example
+     * // Get one ExerciceRespiration
+     * const exerciceRespiration = await prisma.exerciceRespiration.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ExerciceRespirationFindFirstArgs>(args?: SelectSubset<T, ExerciceRespirationFindFirstArgs<ExtArgs>>): Prisma__ExerciceRespirationClient<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ExerciceRespiration that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExerciceRespirationFindFirstOrThrowArgs} args - Arguments to find a ExerciceRespiration
+     * @example
+     * // Get one ExerciceRespiration
+     * const exerciceRespiration = await prisma.exerciceRespiration.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ExerciceRespirationFindFirstOrThrowArgs>(args?: SelectSubset<T, ExerciceRespirationFindFirstOrThrowArgs<ExtArgs>>): Prisma__ExerciceRespirationClient<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ExerciceRespirations that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExerciceRespirationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ExerciceRespirations
+     * const exerciceRespirations = await prisma.exerciceRespiration.findMany()
+     * 
+     * // Get first 10 ExerciceRespirations
+     * const exerciceRespirations = await prisma.exerciceRespiration.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const exerciceRespirationWithIdOnly = await prisma.exerciceRespiration.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ExerciceRespirationFindManyArgs>(args?: SelectSubset<T, ExerciceRespirationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ExerciceRespiration.
+     * @param {ExerciceRespirationCreateArgs} args - Arguments to create a ExerciceRespiration.
+     * @example
+     * // Create one ExerciceRespiration
+     * const ExerciceRespiration = await prisma.exerciceRespiration.create({
+     *   data: {
+     *     // ... data to create a ExerciceRespiration
+     *   }
+     * })
+     * 
+     */
+    create<T extends ExerciceRespirationCreateArgs>(args: SelectSubset<T, ExerciceRespirationCreateArgs<ExtArgs>>): Prisma__ExerciceRespirationClient<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ExerciceRespirations.
+     * @param {ExerciceRespirationCreateManyArgs} args - Arguments to create many ExerciceRespirations.
+     * @example
+     * // Create many ExerciceRespirations
+     * const exerciceRespiration = await prisma.exerciceRespiration.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ExerciceRespirationCreateManyArgs>(args?: SelectSubset<T, ExerciceRespirationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ExerciceRespirations and returns the data saved in the database.
+     * @param {ExerciceRespirationCreateManyAndReturnArgs} args - Arguments to create many ExerciceRespirations.
+     * @example
+     * // Create many ExerciceRespirations
+     * const exerciceRespiration = await prisma.exerciceRespiration.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ExerciceRespirations and only return the `id`
+     * const exerciceRespirationWithIdOnly = await prisma.exerciceRespiration.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ExerciceRespirationCreateManyAndReturnArgs>(args?: SelectSubset<T, ExerciceRespirationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ExerciceRespiration.
+     * @param {ExerciceRespirationDeleteArgs} args - Arguments to delete one ExerciceRespiration.
+     * @example
+     * // Delete one ExerciceRespiration
+     * const ExerciceRespiration = await prisma.exerciceRespiration.delete({
+     *   where: {
+     *     // ... filter to delete one ExerciceRespiration
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ExerciceRespirationDeleteArgs>(args: SelectSubset<T, ExerciceRespirationDeleteArgs<ExtArgs>>): Prisma__ExerciceRespirationClient<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ExerciceRespiration.
+     * @param {ExerciceRespirationUpdateArgs} args - Arguments to update one ExerciceRespiration.
+     * @example
+     * // Update one ExerciceRespiration
+     * const exerciceRespiration = await prisma.exerciceRespiration.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ExerciceRespirationUpdateArgs>(args: SelectSubset<T, ExerciceRespirationUpdateArgs<ExtArgs>>): Prisma__ExerciceRespirationClient<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ExerciceRespirations.
+     * @param {ExerciceRespirationDeleteManyArgs} args - Arguments to filter ExerciceRespirations to delete.
+     * @example
+     * // Delete a few ExerciceRespirations
+     * const { count } = await prisma.exerciceRespiration.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ExerciceRespirationDeleteManyArgs>(args?: SelectSubset<T, ExerciceRespirationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ExerciceRespirations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExerciceRespirationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ExerciceRespirations
+     * const exerciceRespiration = await prisma.exerciceRespiration.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ExerciceRespirationUpdateManyArgs>(args: SelectSubset<T, ExerciceRespirationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ExerciceRespirations and returns the data updated in the database.
+     * @param {ExerciceRespirationUpdateManyAndReturnArgs} args - Arguments to update many ExerciceRespirations.
+     * @example
+     * // Update many ExerciceRespirations
+     * const exerciceRespiration = await prisma.exerciceRespiration.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ExerciceRespirations and only return the `id`
+     * const exerciceRespirationWithIdOnly = await prisma.exerciceRespiration.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ExerciceRespirationUpdateManyAndReturnArgs>(args: SelectSubset<T, ExerciceRespirationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ExerciceRespiration.
+     * @param {ExerciceRespirationUpsertArgs} args - Arguments to update or create a ExerciceRespiration.
+     * @example
+     * // Update or create a ExerciceRespiration
+     * const exerciceRespiration = await prisma.exerciceRespiration.upsert({
+     *   create: {
+     *     // ... data to create a ExerciceRespiration
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ExerciceRespiration we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ExerciceRespirationUpsertArgs>(args: SelectSubset<T, ExerciceRespirationUpsertArgs<ExtArgs>>): Prisma__ExerciceRespirationClient<$Result.GetResult<Prisma.$ExerciceRespirationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ExerciceRespirations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExerciceRespirationCountArgs} args - Arguments to filter ExerciceRespirations to count.
+     * @example
+     * // Count the number of ExerciceRespirations
+     * const count = await prisma.exerciceRespiration.count({
+     *   where: {
+     *     // ... the filter for the ExerciceRespirations we want to count
+     *   }
+     * })
+    **/
+    count<T extends ExerciceRespirationCountArgs>(
+      args?: Subset<T, ExerciceRespirationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ExerciceRespirationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ExerciceRespiration.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExerciceRespirationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ExerciceRespirationAggregateArgs>(args: Subset<T, ExerciceRespirationAggregateArgs>): Prisma.PrismaPromise<GetExerciceRespirationAggregateType<T>>
+
+    /**
+     * Group by ExerciceRespiration.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ExerciceRespirationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ExerciceRespirationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ExerciceRespirationGroupByArgs['orderBy'] }
+        : { orderBy?: ExerciceRespirationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ExerciceRespirationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetExerciceRespirationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ExerciceRespiration model
+   */
+  readonly fields: ExerciceRespirationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ExerciceRespiration.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ExerciceRespirationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ExerciceRespiration model
+   */
+  interface ExerciceRespirationFieldRefs {
+    readonly id: FieldRef<"ExerciceRespiration", 'String'>
+    readonly titre: FieldRef<"ExerciceRespiration", 'String'>
+    readonly inspirationSec: FieldRef<"ExerciceRespiration", 'Int'>
+    readonly expirationSec: FieldRef<"ExerciceRespiration", 'Int'>
+    readonly retenueSec: FieldRef<"ExerciceRespiration", 'Int'>
+    readonly isCustom: FieldRef<"ExerciceRespiration", 'Boolean'>
+    readonly createurId: FieldRef<"ExerciceRespiration", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ExerciceRespiration findUnique
+   */
+  export type ExerciceRespirationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * Filter, which ExerciceRespiration to fetch.
+     */
+    where: ExerciceRespirationWhereUniqueInput
+  }
+
+  /**
+   * ExerciceRespiration findUniqueOrThrow
+   */
+  export type ExerciceRespirationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * Filter, which ExerciceRespiration to fetch.
+     */
+    where: ExerciceRespirationWhereUniqueInput
+  }
+
+  /**
+   * ExerciceRespiration findFirst
+   */
+  export type ExerciceRespirationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * Filter, which ExerciceRespiration to fetch.
+     */
+    where?: ExerciceRespirationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ExerciceRespirations to fetch.
+     */
+    orderBy?: ExerciceRespirationOrderByWithRelationInput | ExerciceRespirationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ExerciceRespirations.
+     */
+    cursor?: ExerciceRespirationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ExerciceRespirations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ExerciceRespirations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ExerciceRespirations.
+     */
+    distinct?: ExerciceRespirationScalarFieldEnum | ExerciceRespirationScalarFieldEnum[]
+  }
+
+  /**
+   * ExerciceRespiration findFirstOrThrow
+   */
+  export type ExerciceRespirationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * Filter, which ExerciceRespiration to fetch.
+     */
+    where?: ExerciceRespirationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ExerciceRespirations to fetch.
+     */
+    orderBy?: ExerciceRespirationOrderByWithRelationInput | ExerciceRespirationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ExerciceRespirations.
+     */
+    cursor?: ExerciceRespirationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ExerciceRespirations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ExerciceRespirations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ExerciceRespirations.
+     */
+    distinct?: ExerciceRespirationScalarFieldEnum | ExerciceRespirationScalarFieldEnum[]
+  }
+
+  /**
+   * ExerciceRespiration findMany
+   */
+  export type ExerciceRespirationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * Filter, which ExerciceRespirations to fetch.
+     */
+    where?: ExerciceRespirationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ExerciceRespirations to fetch.
+     */
+    orderBy?: ExerciceRespirationOrderByWithRelationInput | ExerciceRespirationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ExerciceRespirations.
+     */
+    cursor?: ExerciceRespirationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ExerciceRespirations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ExerciceRespirations.
+     */
+    skip?: number
+    distinct?: ExerciceRespirationScalarFieldEnum | ExerciceRespirationScalarFieldEnum[]
+  }
+
+  /**
+   * ExerciceRespiration create
+   */
+  export type ExerciceRespirationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ExerciceRespiration.
+     */
+    data: XOR<ExerciceRespirationCreateInput, ExerciceRespirationUncheckedCreateInput>
+  }
+
+  /**
+   * ExerciceRespiration createMany
+   */
+  export type ExerciceRespirationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ExerciceRespirations.
+     */
+    data: ExerciceRespirationCreateManyInput | ExerciceRespirationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ExerciceRespiration createManyAndReturn
+   */
+  export type ExerciceRespirationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * The data used to create many ExerciceRespirations.
+     */
+    data: ExerciceRespirationCreateManyInput | ExerciceRespirationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ExerciceRespiration update
+   */
+  export type ExerciceRespirationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ExerciceRespiration.
+     */
+    data: XOR<ExerciceRespirationUpdateInput, ExerciceRespirationUncheckedUpdateInput>
+    /**
+     * Choose, which ExerciceRespiration to update.
+     */
+    where: ExerciceRespirationWhereUniqueInput
+  }
+
+  /**
+   * ExerciceRespiration updateMany
+   */
+  export type ExerciceRespirationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ExerciceRespirations.
+     */
+    data: XOR<ExerciceRespirationUpdateManyMutationInput, ExerciceRespirationUncheckedUpdateManyInput>
+    /**
+     * Filter which ExerciceRespirations to update
+     */
+    where?: ExerciceRespirationWhereInput
+    /**
+     * Limit how many ExerciceRespirations to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ExerciceRespiration updateManyAndReturn
+   */
+  export type ExerciceRespirationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * The data used to update ExerciceRespirations.
+     */
+    data: XOR<ExerciceRespirationUpdateManyMutationInput, ExerciceRespirationUncheckedUpdateManyInput>
+    /**
+     * Filter which ExerciceRespirations to update
+     */
+    where?: ExerciceRespirationWhereInput
+    /**
+     * Limit how many ExerciceRespirations to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ExerciceRespiration upsert
+   */
+  export type ExerciceRespirationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ExerciceRespiration to update in case it exists.
+     */
+    where: ExerciceRespirationWhereUniqueInput
+    /**
+     * In case the ExerciceRespiration found by the `where` argument doesn't exist, create a new ExerciceRespiration with this data.
+     */
+    create: XOR<ExerciceRespirationCreateInput, ExerciceRespirationUncheckedCreateInput>
+    /**
+     * In case the ExerciceRespiration was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ExerciceRespirationUpdateInput, ExerciceRespirationUncheckedUpdateInput>
+  }
+
+  /**
+   * ExerciceRespiration delete
+   */
+  export type ExerciceRespirationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+    /**
+     * Filter which ExerciceRespiration to delete.
+     */
+    where: ExerciceRespirationWhereUniqueInput
+  }
+
+  /**
+   * ExerciceRespiration deleteMany
+   */
+  export type ExerciceRespirationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ExerciceRespirations to delete
+     */
+    where?: ExerciceRespirationWhereInput
+    /**
+     * Limit how many ExerciceRespirations to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ExerciceRespiration without action
+   */
+  export type ExerciceRespirationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExerciceRespiration
+     */
+    select?: ExerciceRespirationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ExerciceRespiration
+     */
+    omit?: ExerciceRespirationOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -15325,6 +16479,19 @@ export namespace Prisma {
   };
 
   export type JournalEmotionScalarFieldEnum = (typeof JournalEmotionScalarFieldEnum)[keyof typeof JournalEmotionScalarFieldEnum]
+
+
+  export const ExerciceRespirationScalarFieldEnum: {
+    id: 'id',
+    titre: 'titre',
+    inspirationSec: 'inspirationSec',
+    expirationSec: 'expirationSec',
+    retenueSec: 'retenueSec',
+    isCustom: 'isCustom',
+    createurId: 'createurId'
+  };
+
+  export type ExerciceRespirationScalarFieldEnum = (typeof ExerciceRespirationScalarFieldEnum)[keyof typeof ExerciceRespirationScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -16188,6 +17355,70 @@ export namespace Prisma {
     emotionN2Id?: StringWithAggregatesFilter<"JournalEmotion"> | string
   }
 
+  export type ExerciceRespirationWhereInput = {
+    AND?: ExerciceRespirationWhereInput | ExerciceRespirationWhereInput[]
+    OR?: ExerciceRespirationWhereInput[]
+    NOT?: ExerciceRespirationWhereInput | ExerciceRespirationWhereInput[]
+    id?: StringFilter<"ExerciceRespiration"> | string
+    titre?: StringFilter<"ExerciceRespiration"> | string
+    inspirationSec?: IntFilter<"ExerciceRespiration"> | number
+    expirationSec?: IntFilter<"ExerciceRespiration"> | number
+    retenueSec?: IntFilter<"ExerciceRespiration"> | number
+    isCustom?: BoolFilter<"ExerciceRespiration"> | boolean
+    createurId?: StringNullableFilter<"ExerciceRespiration"> | string | null
+  }
+
+  export type ExerciceRespirationOrderByWithRelationInput = {
+    id?: SortOrder
+    titre?: SortOrder
+    inspirationSec?: SortOrder
+    expirationSec?: SortOrder
+    retenueSec?: SortOrder
+    isCustom?: SortOrder
+    createurId?: SortOrderInput | SortOrder
+  }
+
+  export type ExerciceRespirationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ExerciceRespirationWhereInput | ExerciceRespirationWhereInput[]
+    OR?: ExerciceRespirationWhereInput[]
+    NOT?: ExerciceRespirationWhereInput | ExerciceRespirationWhereInput[]
+    titre?: StringFilter<"ExerciceRespiration"> | string
+    inspirationSec?: IntFilter<"ExerciceRespiration"> | number
+    expirationSec?: IntFilter<"ExerciceRespiration"> | number
+    retenueSec?: IntFilter<"ExerciceRespiration"> | number
+    isCustom?: BoolFilter<"ExerciceRespiration"> | boolean
+    createurId?: StringNullableFilter<"ExerciceRespiration"> | string | null
+  }, "id">
+
+  export type ExerciceRespirationOrderByWithAggregationInput = {
+    id?: SortOrder
+    titre?: SortOrder
+    inspirationSec?: SortOrder
+    expirationSec?: SortOrder
+    retenueSec?: SortOrder
+    isCustom?: SortOrder
+    createurId?: SortOrderInput | SortOrder
+    _count?: ExerciceRespirationCountOrderByAggregateInput
+    _avg?: ExerciceRespirationAvgOrderByAggregateInput
+    _max?: ExerciceRespirationMaxOrderByAggregateInput
+    _min?: ExerciceRespirationMinOrderByAggregateInput
+    _sum?: ExerciceRespirationSumOrderByAggregateInput
+  }
+
+  export type ExerciceRespirationScalarWhereWithAggregatesInput = {
+    AND?: ExerciceRespirationScalarWhereWithAggregatesInput | ExerciceRespirationScalarWhereWithAggregatesInput[]
+    OR?: ExerciceRespirationScalarWhereWithAggregatesInput[]
+    NOT?: ExerciceRespirationScalarWhereWithAggregatesInput | ExerciceRespirationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ExerciceRespiration"> | string
+    titre?: StringWithAggregatesFilter<"ExerciceRespiration"> | string
+    inspirationSec?: IntWithAggregatesFilter<"ExerciceRespiration"> | number
+    expirationSec?: IntWithAggregatesFilter<"ExerciceRespiration"> | number
+    retenueSec?: IntWithAggregatesFilter<"ExerciceRespiration"> | number
+    isCustom?: BoolWithAggregatesFilter<"ExerciceRespiration"> | boolean
+    createurId?: StringNullableWithAggregatesFilter<"ExerciceRespiration"> | string | null
+  }
+
   export type UserCreateInput = {
     id?: string
     name: string
@@ -16979,6 +18210,76 @@ export namespace Prisma {
     emotionN2Id?: StringFieldUpdateOperationsInput | string
   }
 
+  export type ExerciceRespirationCreateInput = {
+    id?: string
+    titre: string
+    inspirationSec: number
+    expirationSec: number
+    retenueSec: number
+    isCustom?: boolean
+    createurId?: string | null
+  }
+
+  export type ExerciceRespirationUncheckedCreateInput = {
+    id?: string
+    titre: string
+    inspirationSec: number
+    expirationSec: number
+    retenueSec: number
+    isCustom?: boolean
+    createurId?: string | null
+  }
+
+  export type ExerciceRespirationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    titre?: StringFieldUpdateOperationsInput | string
+    inspirationSec?: IntFieldUpdateOperationsInput | number
+    expirationSec?: IntFieldUpdateOperationsInput | number
+    retenueSec?: IntFieldUpdateOperationsInput | number
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    createurId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ExerciceRespirationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    titre?: StringFieldUpdateOperationsInput | string
+    inspirationSec?: IntFieldUpdateOperationsInput | number
+    expirationSec?: IntFieldUpdateOperationsInput | number
+    retenueSec?: IntFieldUpdateOperationsInput | number
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    createurId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ExerciceRespirationCreateManyInput = {
+    id?: string
+    titre: string
+    inspirationSec: number
+    expirationSec: number
+    retenueSec: number
+    isCustom?: boolean
+    createurId?: string | null
+  }
+
+  export type ExerciceRespirationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    titre?: StringFieldUpdateOperationsInput | string
+    inspirationSec?: IntFieldUpdateOperationsInput | number
+    expirationSec?: IntFieldUpdateOperationsInput | number
+    retenueSec?: IntFieldUpdateOperationsInput | number
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    createurId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ExerciceRespirationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    titre?: StringFieldUpdateOperationsInput | string
+    inspirationSec?: IntFieldUpdateOperationsInput | number
+    expirationSec?: IntFieldUpdateOperationsInput | number
+    retenueSec?: IntFieldUpdateOperationsInput | number
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    createurId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -17641,6 +18942,48 @@ export namespace Prisma {
     dateEnregistrement?: SortOrder
     utilisateurId?: SortOrder
     emotionN2Id?: SortOrder
+  }
+
+  export type ExerciceRespirationCountOrderByAggregateInput = {
+    id?: SortOrder
+    titre?: SortOrder
+    inspirationSec?: SortOrder
+    expirationSec?: SortOrder
+    retenueSec?: SortOrder
+    isCustom?: SortOrder
+    createurId?: SortOrder
+  }
+
+  export type ExerciceRespirationAvgOrderByAggregateInput = {
+    inspirationSec?: SortOrder
+    expirationSec?: SortOrder
+    retenueSec?: SortOrder
+  }
+
+  export type ExerciceRespirationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    titre?: SortOrder
+    inspirationSec?: SortOrder
+    expirationSec?: SortOrder
+    retenueSec?: SortOrder
+    isCustom?: SortOrder
+    createurId?: SortOrder
+  }
+
+  export type ExerciceRespirationMinOrderByAggregateInput = {
+    id?: SortOrder
+    titre?: SortOrder
+    inspirationSec?: SortOrder
+    expirationSec?: SortOrder
+    retenueSec?: SortOrder
+    isCustom?: SortOrder
+    createurId?: SortOrder
+  }
+
+  export type ExerciceRespirationSumOrderByAggregateInput = {
+    inspirationSec?: SortOrder
+    expirationSec?: SortOrder
+    retenueSec?: SortOrder
   }
 
   export type SessionCreateNestedManyWithoutUserInput = {

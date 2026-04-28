@@ -230,6 +230,16 @@ exports.Prisma.JournalEmotionScalarFieldEnum = {
   emotionN2Id: 'emotionN2Id'
 };
 
+exports.Prisma.ExerciceRespirationScalarFieldEnum = {
+  id: 'id',
+  titre: 'titre',
+  inspirationSec: 'inspirationSec',
+  expirationSec: 'expirationSec',
+  retenueSec: 'retenueSec',
+  isCustom: 'isCustom',
+  createurId: 'createurId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -261,7 +271,8 @@ exports.Prisma.ModelName = {
   ReponseDiagnostic: 'ReponseDiagnostic',
   EmotionNiveau1: 'EmotionNiveau1',
   EmotionNiveau2: 'EmotionNiveau2',
-  JournalEmotion: 'JournalEmotion'
+  JournalEmotion: 'JournalEmotion',
+  ExerciceRespiration: 'ExerciceRespiration'
 };
 
 /**
