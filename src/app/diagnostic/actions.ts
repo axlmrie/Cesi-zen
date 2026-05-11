@@ -11,7 +11,10 @@ function determineNiveauStress(score: number): string {
   return "Faible";
 }
 
-export async function saveDiagnosticScore(scoreParams: number) {
+export async function saveDiagnosticScore(
+  scoreParams: number,
+  selectedEventIds: string[] = [],
+) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -20,12 +23,45 @@ export async function saveDiagnosticScore(scoreParams: number) {
     throw new Error("Vous devez être connecté pour sauvegarder un résultat.");
   }
 
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { isActif: true },
+  });
+
+  if (!user?.isActif) {
+    throw new Error("Votre compte est desactive.");
+  }
+
   try {
+    const activeEvents =
+      selectedEventIds.length > 0
+        ? await db.evenementStress.findMany({
+            where: {
+              id: { in: selectedEventIds },
+              isActif: true,
+            },
+            select: { id: true, points: true },
+          })
+        : [];
+
+    const score =
+      activeEvents.length > 0
+        ? activeEvents.reduce((sum, event) => sum + event.points, 0)
+        : scoreParams;
+
     await db.resultatDiagnostic.create({
       data: {
-        scoreTotal: scoreParams, 
-        niveauStress: determineNiveauStress(scoreParams),
+        scoreTotal: score, 
+        niveauStress: determineNiveauStress(score),
         utilisateurId: session.user.id,
+        reponses:
+          activeEvents.length > 0
+            ? {
+                create: activeEvents.map((event) => ({
+                  evenementId: event.id,
+                })),
+              }
+            : undefined,
       },
     });
     return { success: true };

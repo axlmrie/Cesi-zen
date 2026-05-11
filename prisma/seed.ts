@@ -75,6 +75,47 @@ async function main() {
 
 
   // ==========================================
+  // 2. GENERATION DES EVENEMENTS DE STRESS
+  // ==========================================
+  console.log('\nGeneration du questionnaire de stress...')
+
+  const stressEventsData = [
+    { description: "Deces du conjoint", points: 100 },
+    { description: "Divorce", points: 73 },
+    { description: "Separation conjugale", points: 65 },
+    { description: "Peine de prison", points: 63 },
+    { description: "Deces d'un proche parent", points: 63 },
+    { description: "Maladie ou accident personnel", points: 53 },
+    { description: "Mariage", points: 50 },
+    { description: "Licenciement professionnel", points: 47 },
+    { description: "Retraite", points: 45 },
+    { description: "Grossesse", points: 40 },
+    { description: "Difficultes sexuelles", points: 39 },
+    { description: "Changement de situation financiere", points: 38 },
+    { description: "Mort d'un ami proche", points: 37 },
+    { description: "Changement de responsabilites au travail", points: 29 },
+    { description: "Demenagement", points: 20 },
+  ]
+
+  for (const event of stressEventsData) {
+    const existingEvent = await prisma.evenementStress.findFirst({
+      where: { description: event.description }
+    })
+
+    if (!existingEvent) {
+      await prisma.evenementStress.create({
+        data: {
+          description: event.description,
+          points: event.points,
+          isActif: true
+        }
+      })
+      console.log(`Ajout de l'evenement: ${event.description}`)
+    }
+  }
+
+
+  // ==========================================
   // 2. GÉNÉRATION DES EXERCICES DE RESPIRATION
   // ==========================================
   console.log('\n🫁 Génération des exercices de respiration...')
