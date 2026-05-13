@@ -1,7 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
-import { env } from "@/env";
 import { db } from "@/server/db";
 
 export const auth = betterAuth({
@@ -13,22 +12,21 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      firstName: { 
-        type: "string", 
-        required: true 
+      firstName: {
+        type: "string",
+        required: true,
       },
-      lastName: { 
-        type: "string", 
-        required: true 
+      lastName: {
+        type: "string",
+        required: true,
       },
-      age: { 
-        type: "number", 
-        required: false 
+      age: {
+        type: "number",
+        required: false,
       },
     },
   },
-  socialProviders: {
-  },
+  socialProviders: {},
 });
 
 export type Session = typeof auth.$Infer.Session;
