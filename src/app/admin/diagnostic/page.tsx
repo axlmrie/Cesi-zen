@@ -29,7 +29,11 @@ const resultPages = [
 export default async function AdminDiagnosticPage() {
   const [events, existingResultPages] = await Promise.all([
     db.evenementStress.findMany({
-      orderBy: [{ isActif: "desc" }, { points: "desc" }, { description: "asc" }],
+      orderBy: [
+        { isActif: "desc" },
+        { points: "desc" },
+        { description: "asc" },
+      ],
     }),
     db.pageInfo.findMany({
       where: { slug: { in: resultPages.map((page) => page.slug) } },
@@ -38,97 +42,103 @@ export default async function AdminDiagnosticPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand">
+      <header className="min-w-0">
+        <p className="text-brand text-sm font-semibold tracking-wide uppercase">
           Diagnostic
         </p>
-        <h1 className="mt-2 font-heading text-3xl font-bold text-foreground">
+        <h1 className="font-heading text-foreground mt-2 text-2xl font-bold text-balance sm:text-3xl">
           Questionnaire de stress Holmes et Rahe
         </h1>
-        <p className="mt-2 max-w-3xl text-muted-foreground">
+        <p className="text-muted-foreground mt-2 max-w-3xl">
           Configurez les evenements proposes au public et les messages affiches
           sur la page de resultat.
         </p>
       </header>
 
-      <section className="rounded-lg border border-border bg-card p-5">
-        <h2 className="font-heading text-xl font-bold text-foreground">
+      <section className="border-border bg-card rounded-lg border p-4 sm:p-5">
+        <h2 className="font-heading text-foreground text-lg font-bold text-balance sm:text-xl">
           Ajouter un evenement
         </h2>
-        <form action={upsertDiagnosticEvent} className="mt-5 grid gap-4 lg:grid-cols-[1fr_120px_auto]">
-          <label className="grid gap-2 text-sm font-semibold text-foreground">
+        <form
+          action={upsertDiagnosticEvent}
+          className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_120px_auto]"
+        >
+          <label className="text-foreground grid gap-2 text-sm font-semibold">
             Description
             <input
               name="description"
               required
-              className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+              className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </label>
-          <label className="grid gap-2 text-sm font-semibold text-foreground">
+          <label className="text-foreground grid gap-2 text-sm font-semibold">
             Points
             <input
               name="points"
               type="number"
               min="0"
               required
-              className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+              className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </label>
           <input type="hidden" name="isActif" value="true" />
           <div className="flex items-end">
-            <button className="h-10 rounded-lg bg-brand px-4 text-sm font-bold text-white transition-colors hover:bg-brand-dark">
+            <button className="bg-brand hover:bg-brand-dark h-10 w-full rounded-lg px-4 text-sm font-bold text-white transition-colors lg:w-auto">
               Ajouter
             </button>
           </div>
         </form>
       </section>
 
-      <section className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border p-5">
-          <h2 className="font-heading text-xl font-bold text-foreground">
+      <section className="border-border bg-card rounded-lg border">
+        <div className="border-border border-b p-5">
+          <h2 className="font-heading text-foreground text-lg font-bold text-balance sm:text-xl">
             Evenements du questionnaire
           </h2>
         </div>
-        <div className="divide-y divide-border">
+        <div className="divide-border divide-y">
           {events.map((event) => (
-            <div key={event.id} className="grid gap-3 p-4 lg:grid-cols-[1fr_110px_120px_auto]">
+            <div
+              key={event.id}
+              className="grid min-w-0 gap-3 p-4 lg:grid-cols-[minmax(0,1fr)_110px_120px_auto]"
+            >
               <form action={upsertDiagnosticEvent} className="contents">
                 <input type="hidden" name="id" value={event.id} />
                 <input
                   name="description"
                   defaultValue={event.description}
-                  className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                  className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
                 />
                 <input
                   name="points"
                   type="number"
                   min="0"
                   defaultValue={event.points}
-                  className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                  className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
                 />
-                <label className="flex h-10 items-center gap-2 text-sm font-semibold text-foreground">
+                <label className="text-foreground flex h-10 items-center gap-2 text-sm font-semibold">
                   <input
                     name="isActif"
                     type="checkbox"
                     defaultChecked={event.isActif}
-                    className="h-5 w-5 accent-brand"
+                    className="accent-brand h-5 w-5"
                   />
                   Actif
                 </label>
-                <button className="h-10 rounded-lg border border-border px-3 text-sm font-bold text-foreground transition-colors hover:bg-secondary">
+                <button className="border-border text-foreground hover:bg-secondary h-10 rounded-lg border px-3 text-sm font-bold transition-colors">
                   Enregistrer
                 </button>
               </form>
               <form action={deleteDiagnosticEvent} className="lg:col-start-4">
                 <input type="hidden" name="id" value={event.id} />
-                <button className="h-10 rounded-lg bg-destructive/10 px-3 text-sm font-bold text-destructive transition-colors hover:bg-destructive/20">
+                <button className="bg-destructive/10 text-destructive hover:bg-destructive/20 h-10 w-full rounded-lg px-3 text-sm font-bold transition-colors lg:w-auto">
                   Supprimer
                 </button>
               </form>
             </div>
           ))}
           {events.length === 0 && (
-            <p className="p-5 text-sm text-muted-foreground">
+            <p className="text-muted-foreground p-5 text-sm">
               Aucun evenement configure. Le diagnostic utilisera le jeu de
               secours integre tant que la base est vide.
             </p>
@@ -137,7 +147,7 @@ export default async function AdminDiagnosticPage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-heading text-xl font-bold text-foreground">
+        <h2 className="font-heading text-foreground text-lg font-bold text-balance sm:text-xl">
           Messages de resultat
         </h2>
         <div className="grid gap-4">
@@ -150,33 +160,35 @@ export default async function AdminDiagnosticPage() {
               <form
                 key={resultPage.slug}
                 action={upsertPageInfo}
-                className="rounded-lg border border-border bg-card p-5"
+                className="border-border bg-card rounded-lg border p-4 sm:p-5"
               >
                 {existing ? (
                   <input type="hidden" name="id" value={existing.id} />
                 ) : null}
                 <input type="hidden" name="slug" value={resultPage.slug} />
                 <input type="hidden" name="isPublie" value="true" />
-                <label className="grid gap-2 text-sm font-semibold text-foreground">
+                <label className="text-foreground grid gap-2 text-sm font-semibold">
                   Libelle affiche
                   <input
                     name="titre"
                     defaultValue={existing?.titre ?? resultPage.fallbackTitle}
                     required
-                    className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                    className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
                   />
                 </label>
-                <label className="mt-4 grid gap-2 text-sm font-semibold text-foreground">
+                <label className="text-foreground mt-4 grid gap-2 text-sm font-semibold">
                   Message
                   <textarea
                     name="contenu"
                     rows={4}
-                    defaultValue={existing?.contenu ?? resultPage.fallbackContent}
+                    defaultValue={
+                      existing?.contenu ?? resultPage.fallbackContent
+                    }
                     required
-                    className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                    className="border-border bg-background focus:ring-brand/30 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
                   />
                 </label>
-                <button className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-brand-dark">
+                <button className="bg-brand hover:bg-brand-dark mt-4 w-full rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors sm:w-auto">
                   Enregistrer le message
                 </button>
               </form>

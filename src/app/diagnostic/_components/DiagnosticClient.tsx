@@ -51,7 +51,9 @@ export function DiagnosticClient({
 
   const toggleItem = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id],
+      prev.includes(id)
+        ? prev.filter((itemId) => itemId !== id)
+        : [...prev, id],
     );
   };
 
@@ -108,14 +110,14 @@ export function DiagnosticClient({
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background pb-20">
+    <div className="bg-background min-h-[calc(100dvh-4rem)] pb-20">
       <RGPDModal />
 
-      <main className="mx-auto max-w-3xl px-6 pt-12">
+      <main className="mx-auto max-w-3xl px-4 pt-8 sm:px-6 sm:pt-12">
         {!isFinished ? (
           <div className="animate-in slide-in-from-bottom-4 duration-500">
-            <header className="mb-10 text-center">
-              <h1 className="mb-4 font-heading text-3xl font-bold text-foreground">
+            <header className="mb-8 text-center sm:mb-10">
+              <h1 className="font-heading text-foreground mb-4 text-2xl font-bold text-balance sm:text-3xl">
                 Evaluez votre niveau de stress
               </h1>
               <p className="text-muted-foreground">
@@ -129,20 +131,20 @@ export function DiagnosticClient({
                 <button
                   key={item.id}
                   onClick={() => toggleItem(item.id)}
-                  className={`flex w-full items-center justify-between rounded-lg border-2 p-4 transition-all ${
+                  className={`flex w-full items-start justify-between gap-3 rounded-lg border-2 p-4 transition-all sm:items-center ${
                     selectedIds.includes(item.id)
-                      ? "border-brand bg-brand/5 ring-1 ring-brand"
+                      ? "border-brand bg-brand/5 ring-brand ring-1"
                       : "border-border bg-card hover:border-brand/30"
                   }`}
                 >
-                  <span className="text-left font-medium text-foreground">
+                  <span className="text-foreground min-w-0 flex-1 text-left font-medium">
                     {item.label}
                   </span>
-                  <span className="ml-3 shrink-0 text-sm font-semibold text-muted-foreground">
+                  <span className="text-muted-foreground shrink-0 text-sm font-semibold">
                     {item.points} pts
                   </span>
                   <div
-                    className={`ml-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
                       selectedIds.includes(item.id)
                         ? "border-brand bg-brand"
                         : "border-border"
@@ -156,21 +158,21 @@ export function DiagnosticClient({
               ))}
             </div>
 
-            <div className="sticky bottom-6 mt-10 flex items-center justify-between rounded-lg border border-border bg-background/90 p-4 shadow-xl backdrop-blur-md">
+            <div className="border-border bg-background/90 sticky bottom-3 mt-10 flex flex-col gap-3 rounded-lg border p-4 shadow-xl backdrop-blur-md sm:bottom-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="px-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <p className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
                   Score actuel
                 </p>
-                <p className="text-2xl font-bold text-brand">
+                <p className="text-brand text-2xl font-bold">
                   {totalScore}{" "}
-                  <span className="text-sm font-normal text-muted-foreground">
+                  <span className="text-muted-foreground text-sm font-normal">
                     pts
                   </span>
                 </p>
               </div>
               <button
                 onClick={() => setIsFinished(true)}
-                className="rounded-lg bg-brand px-5 py-3 text-sm font-bold text-white transition-all hover:bg-brand-dark sm:px-8"
+                className="bg-brand hover:bg-brand-dark w-full rounded-lg px-5 py-3 text-sm font-bold text-white transition-all sm:w-auto sm:px-8"
               >
                 Terminer
               </button>
@@ -182,15 +184,17 @@ export function DiagnosticClient({
               <AlertTriangle className={`h-12 w-12 ${risk.color}`} />
             </div>
 
-            <h2 className="mb-2 font-heading text-4xl font-bold text-foreground">
+            <h2 className="font-heading text-foreground mb-2 text-3xl font-bold sm:text-4xl">
               {totalScore} Points
             </h2>
             <p className={`mb-6 text-xl font-bold ${risk.color}`}>
               {risk.label}
             </p>
 
-            <div className={`mb-10 rounded-lg border-2 p-6 ${risk.bg} ${risk.border}`}>
-              <p className="whitespace-pre-line leading-relaxed text-foreground">
+            <div
+              className={`mb-8 rounded-lg border-2 p-5 sm:mb-10 sm:p-6 ${risk.bg} ${risk.border}`}
+            >
+              <p className="text-foreground leading-relaxed whitespace-pre-line">
                 {risk.desc}
               </p>
             </div>
@@ -199,7 +203,7 @@ export function DiagnosticClient({
               <button
                 onClick={handleSaveScore}
                 disabled={isSaving}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand py-4 font-bold text-white shadow-lg transition-all hover:shadow-brand/20 disabled:opacity-70"
+                className="bg-brand hover:shadow-brand/20 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-4 font-bold text-white shadow-lg transition-all disabled:opacity-70"
               >
                 {isSaving ? (
                   <>
@@ -219,7 +223,7 @@ export function DiagnosticClient({
                   setSelectedIds([]);
                   setIsFinished(false);
                 }}
-                className="flex items-center justify-center gap-2 py-2 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground flex items-center justify-center gap-2 py-2"
               >
                 <RefreshCw className="h-4 w-4" /> Recommencer le test
               </button>

@@ -28,27 +28,34 @@ export function SidebarNav({ activeTab, setActiveTab }: SidebarProps) {
   ] as const;
 
   return (
-    <aside className="w-full md:w-64 shrink-0">
-      <nav className="flex flex-col gap-2">
+    <aside className="-mx-4 w-auto shrink-0 overflow-x-auto px-4 md:mx-0 md:w-64 md:overflow-visible md:px-0">
+      <nav className="flex min-w-max gap-2 md:min-w-0 md:flex-col">
         {tabs.map((tab) => (
-          <button 
+          <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-              activeTab === tab.id ? "bg-brand text-white shadow-md" : "hover:bg-secondary text-muted-foreground hover:text-foreground"
+            className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 font-medium transition-all md:shrink ${
+              activeTab === tab.id
+                ? "bg-brand text-white shadow-md"
+                : "hover:bg-secondary text-muted-foreground hover:text-foreground"
             }`}
           >
             <tab.icon className="h-5 w-5" /> {tab.label}
           </button>
         ))}
-        
-        <div className="h-[1px] bg-border my-2" />
-        
-        <button 
-          onClick={handleSignOut} disabled={isLoggingOut}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-destructive hover:bg-destructive/10 transition-all"
+
+        <div className="bg-border my-2 hidden h-[1px] md:block" />
+
+        <button
+          onClick={handleSignOut}
+          disabled={isLoggingOut}
+          className="text-destructive hover:bg-destructive/10 flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 font-medium transition-all md:shrink"
         >
-          {isLoggingOut ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />} 
+          {isLoggingOut ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <LogOut className="h-5 w-5" />
+          )}
           Se déconnecter
         </button>
       </nav>

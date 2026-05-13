@@ -13,11 +13,9 @@ export default async function PublicLayout({
   });
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-background selection:bg-brand/20 selection:text-brand-dark">
+    <div className="bg-background selection:bg-brand/20 selection:text-brand-dark relative flex min-h-screen flex-col">
       <NavbarPublic menus={menus} />
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
 
       <Footer />
     </div>

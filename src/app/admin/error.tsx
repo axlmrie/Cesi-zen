@@ -2,11 +2,7 @@
 
 import { ErrorState } from "@/components/ErrorState";
 
-export default function AdminError({
-  reset,
-}: {
-  reset: () => void;
-}) {
+export default function AdminError({ reset }: { reset: () => void }) {
   return (
     <ErrorState
       eyebrow="Back-office"

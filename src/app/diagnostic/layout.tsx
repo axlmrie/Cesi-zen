@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { auth } from "@/server/better-auth/config";
 import { db } from "@/server/db";
 
-import { NavbarPrivate } from "@/components/NavbarPrivate"; 
-import { NavbarPublic } from "@/components/NavbarPublic"; 
+import { NavbarPrivate } from "@/components/NavbarPrivate";
+import { NavbarPublic } from "@/components/NavbarPublic";
 
 export default async function DiagnosticLayout({
   children,
@@ -30,16 +30,14 @@ export default async function DiagnosticLayout({
   ]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="bg-background flex min-h-screen flex-col">
       {session && user?.isActif ? (
         <NavbarPrivate isAdmin={user.role === "ADMIN"} menus={menus} />
       ) : (
         <NavbarPublic menus={menus} />
       )}
-      
-      <main className="flex-1">
-        {children}
-      </main>
+
+      <main className="flex-1">{children}</main>
     </div>
   );
 }

@@ -3,10 +3,14 @@
 import { auth } from "@/server/better-auth/config";
 import { headers } from "next/headers";
 import { db } from "@/server/db";
+import { cleanOptionalNote } from "@/lib/cesizen";
 
-export async function saveJournalEntry(emotionN2Id: string, notePersonnelle: string) {
+export async function saveJournalEntry(
+  emotionN2Id: string,
+  notePersonnelle: string,
+) {
   const session = await auth.api.getSession({ headers: await headers() });
-  
+
   if (!session?.user) {
     throw new Error("Action non autorisée.");
   }
@@ -15,9 +19,8 @@ export async function saveJournalEntry(emotionN2Id: string, notePersonnelle: str
     await db.journalEmotion.create({
       data: {
         utilisateurId: session.user.id,
-        emotionN2Id: emotionN2Id,
-        // On n'enregistre la note que si elle n'est pas vide
-        notePersonnelle: notePersonnelle.trim() !== "" ? notePersonnelle : null,
+        emotionN2Id,
+        notePersonnelle: cleanOptionalNote(notePersonnelle),
       },
     });
 

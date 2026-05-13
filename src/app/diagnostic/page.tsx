@@ -14,9 +14,17 @@ const fallbackItems = [
   { id: "fallback-9", label: "Retraite", points: 45 },
   { id: "fallback-10", label: "Grossesse", points: 40 },
   { id: "fallback-11", label: "Difficultes sexuelles", points: 39 },
-  { id: "fallback-12", label: "Changement de situation financiere", points: 38 },
+  {
+    id: "fallback-12",
+    label: "Changement de situation financiere",
+    points: 38,
+  },
   { id: "fallback-13", label: "Mort d'un ami proche", points: 37 },
-  { id: "fallback-14", label: "Changement de responsabilites au travail", points: 29 },
+  {
+    id: "fallback-14",
+    label: "Changement de responsabilites au travail",
+    points: 29,
+  },
   { id: "fallback-15", label: "Demenagement", points: 20 },
 ];
 

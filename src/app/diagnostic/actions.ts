@@ -4,12 +4,7 @@
 import { auth } from "@/server/better-auth/config";
 import { headers } from "next/headers";
 import { db } from "@/server/db";
-
-function determineNiveauStress(score: number): string {
-  if (score >= 300) return "Élevé";
-  if (score >= 150) return "Modéré";
-  return "Faible";
-}
+import { determineStressLevel } from "@/lib/cesizen";
 
 export async function saveDiagnosticScore(
   scoreParams: number,
@@ -51,8 +46,8 @@ export async function saveDiagnosticScore(
 
     await db.resultatDiagnostic.create({
       data: {
-        scoreTotal: score, 
-        niveauStress: determineNiveauStress(score),
+        scoreTotal: score,
+        niveauStress: determineStressLevel(score),
         utilisateurId: session.user.id,
         reponses:
           activeEvents.length > 0

@@ -37,21 +37,25 @@ export function ErrorState({
   tone = "public",
 }: ErrorStateProps) {
   const Icon =
-    tone === "admin" ? ShieldAlert : tone === "danger" ? AlertTriangle : HeartPulse;
+    tone === "admin"
+      ? ShieldAlert
+      : tone === "danger"
+        ? AlertTriangle
+        : HeartPulse;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+    <main className="bg-background flex min-h-screen items-center justify-center px-4 py-12">
       <section className="w-full max-w-2xl text-center">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-lg bg-brand/10 text-brand">
+        <div className="bg-brand/10 text-brand mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-lg">
           <Icon className="h-8 w-8" />
         </div>
-        <p className="text-sm font-bold uppercase tracking-wide text-brand">
+        <p className="text-brand text-sm font-bold tracking-wide uppercase">
           {eyebrow}
         </p>
-        <h1 className="mt-3 font-heading text-3xl font-bold text-foreground sm:text-4xl">
+        <h1 className="font-heading text-foreground mt-3 text-3xl font-bold sm:text-4xl">
           {title}
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+        <p className="text-muted-foreground mx-auto mt-4 max-w-xl text-sm leading-relaxed sm:text-base">
           {description}
         </p>
 
@@ -59,7 +63,7 @@ export function ErrorState({
           {onReset && resetLabel ? (
             <button
               onClick={onReset}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition-colors hover:bg-brand-dark"
+              className="bg-brand hover:bg-brand-dark inline-flex h-11 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold text-white transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
               {resetLabel}
@@ -69,7 +73,7 @@ export function ErrorState({
           {primaryAction ? (
             <Link
               href={primaryAction.href}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white transition-colors hover:bg-brand-dark"
+              className="bg-brand hover:bg-brand-dark inline-flex h-11 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold text-white transition-colors"
             >
               <Home className="h-4 w-4" />
               {primaryAction.label}
@@ -79,7 +83,7 @@ export function ErrorState({
           {secondaryAction ? (
             <Link
               href={secondaryAction.href}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 text-sm font-bold text-foreground transition-colors hover:bg-secondary"
+              className="border-border bg-card text-foreground hover:bg-secondary inline-flex h-11 items-center justify-center gap-2 rounded-lg border px-5 text-sm font-bold transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               {secondaryAction.label}

@@ -33,13 +33,13 @@ export default async function InformationPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="mx-auto max-w-4xl px-6 py-16">
-        <header className="mb-16 text-center">
-          <h1 className="mb-4 font-heading text-4xl font-bold text-foreground">
+    <div className="bg-background min-h-screen">
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14 lg:py-16">
+        <header className="mb-10 text-center sm:mb-14 md:mb-16">
+          <h1 className="font-heading text-foreground mb-4 text-3xl font-bold text-balance sm:text-4xl">
             Comprendre pour mieux <span className="text-brand">agir</span>
           </h1>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-muted-foreground text-base leading-relaxed sm:text-xl">
             Informations et prevention autour de la sante mentale et de la
             gestion du stress.
           </p>
@@ -51,17 +51,17 @@ export default async function InformationPage() {
                 <section
                   key={page.id}
                   id={page.slug}
-                  className="scroll-mt-20 rounded-lg border border-border bg-card p-6"
+                  className="border-border bg-card scroll-mt-20 rounded-lg border p-5 sm:p-6"
                 >
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="rounded-lg bg-brand/10 p-3">
-                      <Brain className="h-7 w-7 text-brand" />
+                  <div className="mb-4 flex items-start gap-3">
+                    <div className="bg-brand/10 shrink-0 rounded-lg p-3">
+                      <Brain className="text-brand h-7 w-7" />
                     </div>
-                    <h2 className="font-heading text-2xl font-bold text-foreground">
+                    <h2 className="font-heading text-foreground min-w-0 text-xl font-bold text-balance sm:text-2xl">
                       {page.titre}
                     </h2>
                   </div>
-                  <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                     {page.contenu}
                   </p>
                 </section>
@@ -73,37 +73,37 @@ export default async function InformationPage() {
                   <section
                     key={section.id}
                     id={section.id}
-                    className="scroll-mt-20 rounded-lg border border-border bg-card p-6"
+                    className="border-border bg-card scroll-mt-20 rounded-lg border p-5 sm:p-6"
                   >
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="rounded-lg bg-brand/10 p-3">
-                        <Icon className="h-7 w-7 text-brand" />
+                    <div className="mb-4 flex items-start gap-3">
+                      <div className="bg-brand/10 shrink-0 rounded-lg p-3">
+                        <Icon className="text-brand h-7 w-7" />
                       </div>
-                      <h2 className="font-heading text-2xl font-bold text-foreground">
+                      <h2 className="font-heading text-foreground min-w-0 text-xl font-bold text-balance sm:text-2xl">
                         {section.title}
                       </h2>
                     </div>
-                    <p className="leading-relaxed text-muted-foreground">
+                    <p className="text-muted-foreground leading-relaxed">
                       {section.content}
                     </p>
                   </section>
                 );
               })}
 
-          <section className="rounded-lg border border-destructive/20 bg-destructive/5 p-6">
-            <div className="mb-4 flex items-center gap-3 text-destructive">
-              <ShieldAlert className="h-6 w-6" />
+          <section className="border-destructive/20 bg-destructive/5 rounded-lg border p-5 sm:p-6">
+            <div className="text-destructive mb-4 flex items-center gap-3">
+              <ShieldAlert className="h-6 w-6 shrink-0" />
               <h2 className="font-heading text-xl font-bold">Aide immediate</h2>
             </div>
-            <p className="mb-6 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mb-6 text-sm">
               Si vous traversez une crise ou avez des pensees sombres, CESIZen
               ne remplace pas un accompagnement professionnel.
             </p>
             <div className="flex flex-wrap gap-4">
-              <div className="rounded-lg border border-border bg-white px-4 py-2 font-bold text-foreground">
+              <div className="border-border text-foreground rounded-lg border bg-white px-4 py-2 font-bold">
                 3114
               </div>
-              <div className="rounded-lg border border-border bg-white px-4 py-2 font-bold text-foreground">
+              <div className="border-border text-foreground rounded-lg border bg-white px-4 py-2 font-bold">
                 15
               </div>
             </div>

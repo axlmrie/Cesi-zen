@@ -44,50 +44,51 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-6 lg:space-y-8">
       <header className="min-w-0">
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand">
+        <p className="text-brand text-sm font-semibold tracking-wide uppercase">
           Comptes utilisateurs
         </p>
-        <h1 className="mt-2 font-heading text-2xl font-bold text-foreground sm:text-3xl">
+        <h1 className="font-heading text-foreground mt-2 text-2xl font-bold sm:text-3xl">
           Gestion des utilisateurs et administrateurs
         </h1>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+        <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-relaxed sm:text-base">
           Les suppressions sont traitees par anonymisation et desactivation du
-          compte, afin de respecter le principe RGPD de minimisation des donnees.
+          compte, afin de respecter le principe RGPD de minimisation des
+          donnees.
         </p>
       </header>
 
-      <section className="rounded-lg border border-border bg-card p-4 sm:p-5">
-        <h2 className="font-heading text-lg font-bold text-foreground sm:text-xl">
+      <section className="border-border bg-card rounded-lg border p-4 sm:p-5">
+        <h2 className="font-heading text-foreground text-lg font-bold sm:text-xl">
           Creer un compte
         </h2>
         <form
           action={createManagedUser}
           className="mt-5 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6"
         >
-          <label className="grid min-w-0 gap-2 text-sm font-semibold text-foreground">
+          <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
             Prenom
             <input name="firstName" required className={fieldClass} />
           </label>
-          <label className="grid min-w-0 gap-2 text-sm font-semibold text-foreground">
+          <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
             Nom
             <input name="lastName" required className={fieldClass} />
           </label>
-          <label className="grid min-w-0 gap-2 text-sm font-semibold text-foreground sm:col-span-2 xl:col-span-2">
+          <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold sm:col-span-2 xl:col-span-2">
             Email
             <input name="email" type="email" required className={fieldClass} />
           </label>
-          <label className="grid min-w-0 gap-2 text-sm font-semibold text-foreground">
+          <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
             Age
             <input name="age" type="number" min="13" className={fieldClass} />
           </label>
-          <label className="grid min-w-0 gap-2 text-sm font-semibold text-foreground">
+          <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
             Role
             <select name="role" defaultValue="USER" className={fieldClass}>
               <option value="USER">Utilisateur</option>
               <option value="ADMIN">Administrateur</option>
             </select>
           </label>
-          <label className="grid min-w-0 gap-2 text-sm font-semibold text-foreground sm:col-span-2 xl:col-span-2">
+          <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold sm:col-span-2 xl:col-span-2">
             Mot de passe initial
             <input
               name="password"
@@ -98,16 +99,16 @@ export default async function AdminUsersPage() {
             />
           </label>
           <div className="flex min-w-0 items-end sm:col-span-2 xl:col-span-4">
-            <button className="h-10 w-full rounded-lg bg-brand px-4 text-sm font-bold text-white transition-colors hover:bg-brand-dark sm:w-auto">
+            <button className="bg-brand hover:bg-brand-dark h-10 w-full rounded-lg px-4 text-sm font-bold text-white transition-colors sm:w-auto">
               Creer le compte
             </button>
           </div>
         </form>
       </section>
 
-      <section className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border p-4 sm:p-5">
-          <h2 className="font-heading text-lg font-bold text-foreground sm:text-xl">
+      <section className="border-border bg-card rounded-lg border">
+        <div className="border-border border-b p-4 sm:p-5">
+          <h2 className="font-heading text-foreground text-lg font-bold sm:text-xl">
             Comptes existants
           </h2>
         </div>
@@ -119,17 +120,17 @@ export default async function AdminUsersPage() {
             return (
               <article
                 key={user.id}
-                className="min-w-0 rounded-lg border border-border bg-background p-4"
+                className="border-border bg-background min-w-0 rounded-lg border p-4"
               >
                 <div className="flex min-w-0 items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-foreground">
+                    <p className="text-foreground truncate font-semibold">
                       {user.name}
                     </p>
-                    <p className="break-all text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm break-all">
                       {user.email}
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mt-1 text-xs">
                       {user.firstName} {user.lastName}
                       {user.age !== null ? `, ${user.age} ans` : ""}
                     </p>
@@ -148,7 +149,7 @@ export default async function AdminUsersPage() {
                 <div className="mt-4 grid gap-3">
                   <form action={updateManagedUserRole} className="grid gap-2">
                     <input type="hidden" name="userId" value={user.id} />
-                    <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    <label className="text-muted-foreground text-xs font-bold tracking-wide uppercase">
                       Role
                     </label>
                     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
@@ -161,7 +162,10 @@ export default async function AdminUsersPage() {
                         <option value="USER">Utilisateur</option>
                         <option value="ADMIN">Administrateur</option>
                       </select>
-                      <button disabled={isCurrentAdmin} className={smallButtonClass}>
+                      <button
+                        disabled={isCurrentAdmin}
+                        className={smallButtonClass}
+                      >
                         Valider
                       </button>
                     </div>
@@ -194,14 +198,14 @@ export default async function AdminUsersPage() {
                   </div>
                 </div>
 
-                <p className="mt-4 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mt-4 text-xs">
                   Cree le {formatDate(user.createdAt)}
                 </p>
               </article>
             );
           })}
           {users.length === 0 && (
-            <p className="p-2 text-sm text-muted-foreground">
+            <p className="text-muted-foreground p-2 text-sm">
               Aucun compte utilisateur.
             </p>
           )}
@@ -209,7 +213,7 @@ export default async function AdminUsersPage() {
 
         <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[860px] table-fixed text-left text-sm">
-            <thead className="bg-secondary text-xs uppercase text-muted-foreground">
+            <thead className="bg-secondary text-muted-foreground text-xs uppercase">
               <tr>
                 <th className="w-[34%] px-4 py-3">Utilisateur</th>
                 <th className="w-[24%] px-4 py-3">Role</th>
@@ -218,18 +222,20 @@ export default async function AdminUsersPage() {
                 <th className="w-[18%] px-4 py-3">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-border divide-y">
               {users.map((user) => {
                 const isCurrentAdmin = user.id === currentAdmin.id;
 
                 return (
                   <tr key={user.id} className="align-top">
                     <td className="min-w-0 px-4 py-4">
-                      <p className="truncate font-semibold text-foreground">
+                      <p className="text-foreground truncate font-semibold">
                         {user.name}
                       </p>
-                      <p className="break-all text-muted-foreground">{user.email}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="text-muted-foreground break-all">
+                        {user.email}
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-xs">
                         {user.firstName} {user.lastName}
                         {user.age !== null ? `, ${user.age} ans` : ""}
                       </p>
@@ -249,7 +255,10 @@ export default async function AdminUsersPage() {
                           <option value="USER">Utilisateur</option>
                           <option value="ADMIN">Administrateur</option>
                         </select>
-                        <button disabled={isCurrentAdmin} className={smallButtonClass}>
+                        <button
+                          disabled={isCurrentAdmin}
+                          className={smallButtonClass}
+                        >
                           Valider
                         </button>
                       </form>
@@ -265,7 +274,7 @@ export default async function AdminUsersPage() {
                         {user.isActif ? "Actif" : "Desactive"}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-muted-foreground">
+                    <td className="text-muted-foreground px-4 py-4">
                       {formatDate(user.createdAt)}
                     </td>
                     <td className="px-4 py-4">

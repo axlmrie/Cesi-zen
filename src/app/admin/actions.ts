@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import { revalidatePath } from "next/cache";
 
+import { createSlug } from "@/lib/cesizen";
 import { requireAdminAction } from "@/server/admin";
 import { db } from "@/server/db";
 
@@ -27,7 +28,9 @@ function getInt(formData: FormData, key: string, fallback = 0) {
 
 function getOptionalInt(formData: FormData, key: string) {
   const rawValue = getText(formData, key);
-  if (!rawValue) return null;
+  if (!rawValue) {
+    return null;
+  }
 
   const value = Number.parseInt(rawValue, 10);
   return Number.isFinite(value) ? value : null;
@@ -42,20 +45,13 @@ function getRole(formData: FormData, key = "role"): UserRole {
   return getText(formData, key) === "ADMIN" ? "ADMIN" : "USER";
 }
 
-function slugify(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 async function ensureTargetIsNotCurrentAdmin(targetUserId: string) {
   const admin = await requireAdminAction();
 
   if (targetUserId === admin.id) {
-    throw new Error("Vous ne pouvez pas modifier votre propre acces administrateur.");
+    throw new Error(
+      "Vous ne pouvez pas modifier votre propre acces administrateur.",
+    );
   }
 
   return admin;
@@ -227,7 +223,7 @@ export async function upsertPageInfo(formData: FormData) {
   const requestedSlug = getText(formData, "slug");
   const contenu = getText(formData, "contenu");
   const isPublie = getCheckbox(formData, "isPublie");
-  const slug = slugify(requestedSlug || titre);
+  const slug = createSlug(requestedSlug || titre);
 
   if (!titre || !slug || !contenu) {
     throw new Error("Titre, slug et contenu sont obligatoires.");
@@ -259,7 +255,9 @@ export async function deletePageInfo(formData: FormData) {
   await requireAdminAction();
 
   const id = getText(formData, "id");
-  if (!id) throw new Error("Page introuvable.");
+  if (!id) {
+    throw new Error("Page introuvable.");
+  }
 
   await db.pageInfo.delete({ where: { id } });
 
@@ -300,7 +298,9 @@ export async function deleteMenu(formData: FormData) {
   await requireAdminAction();
 
   const id = getText(formData, "id");
-  if (!id) throw new Error("Menu introuvable.");
+  if (!id) {
+    throw new Error("Menu introuvable.");
+  }
 
   await db.menu.delete({ where: { id } });
 
@@ -341,7 +341,9 @@ export async function deleteDiagnosticEvent(formData: FormData) {
   await requireAdminAction();
 
   const id = getText(formData, "id");
-  if (!id) throw new Error("Evenement introuvable.");
+  if (!id) {
+    throw new Error("Evenement introuvable.");
+  }
 
   await db.evenementStress.delete({ where: { id } });
 
@@ -366,11 +368,23 @@ export async function upsertRespirationExercise(formData: FormData) {
   if (id) {
     await db.exerciceRespiration.update({
       where: { id },
-      data: { titre, inspirationSec, retenueSec, expirationSec, isCustom: false },
+      data: {
+        titre,
+        inspirationSec,
+        retenueSec,
+        expirationSec,
+        isCustom: false,
+      },
     });
   } else {
     await db.exerciceRespiration.create({
-      data: { titre, inspirationSec, retenueSec, expirationSec, isCustom: false },
+      data: {
+        titre,
+        inspirationSec,
+        retenueSec,
+        expirationSec,
+        isCustom: false,
+      },
     });
   }
 
@@ -383,7 +397,9 @@ export async function deleteRespirationExercise(formData: FormData) {
   await requireAdminAction();
 
   const id = getText(formData, "id");
-  if (!id) throw new Error("Exercice introuvable.");
+  if (!id) {
+    throw new Error("Exercice introuvable.");
+  }
 
   await db.exerciceRespiration.delete({ where: { id } });
 
@@ -422,7 +438,9 @@ export async function deleteEmotionNiveau1(formData: FormData) {
   await requireAdminAction();
 
   const id = getText(formData, "id");
-  if (!id) throw new Error("Emotion introuvable.");
+  if (!id) {
+    throw new Error("Emotion introuvable.");
+  }
 
   await db.emotionNiveau1.delete({ where: { id } });
 
@@ -462,7 +480,9 @@ export async function deleteEmotionNiveau2(formData: FormData) {
   await requireAdminAction();
 
   const id = getText(formData, "id");
-  if (!id) throw new Error("Emotion introuvable.");
+  if (!id) {
+    throw new Error("Emotion introuvable.");
+  }
 
   await db.emotionNiveau2.delete({ where: { id } });
 

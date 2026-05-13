@@ -11,124 +11,130 @@ export default async function AdminRespirationPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand">
+      <header className="min-w-0">
+        <p className="text-brand text-sm font-semibold tracking-wide uppercase">
           Respiration
         </p>
-        <h1 className="mt-2 font-heading text-3xl font-bold text-foreground">
+        <h1 className="font-heading text-foreground mt-2 text-2xl font-bold text-balance sm:text-3xl">
           Exercices de coherence cardiaque
         </h1>
-        <p className="mt-2 max-w-3xl text-muted-foreground">
+        <p className="text-muted-foreground mt-2 max-w-3xl">
           Configurez les rythmes proposes aux visiteurs et utilisateurs :
           inspiration, apnee et expiration.
         </p>
       </header>
 
-      <section className="rounded-lg border border-border bg-card p-5">
-        <h2 className="font-heading text-xl font-bold text-foreground">
+      <section className="border-border bg-card rounded-lg border p-4 sm:p-5">
+        <h2 className="font-heading text-foreground text-lg font-bold text-balance sm:text-xl">
           Nouvel exercice
         </h2>
-        <form action={upsertRespirationExercise} className="mt-5 grid gap-4 lg:grid-cols-[1fr_140px_140px_140px_auto]">
-          <label className="grid gap-2 text-sm font-semibold text-foreground">
+        <form
+          action={upsertRespirationExercise}
+          className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px_140px_140px_auto]"
+        >
+          <label className="text-foreground grid gap-2 text-sm font-semibold">
             Titre
             <input
               name="titre"
               required
-              className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+              className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </label>
-          <label className="grid gap-2 text-sm font-semibold text-foreground">
+          <label className="text-foreground grid gap-2 text-sm font-semibold">
             Inspiration
             <input
               name="inspirationSec"
               type="number"
               min="1"
               required
-              className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+              className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </label>
-          <label className="grid gap-2 text-sm font-semibold text-foreground">
+          <label className="text-foreground grid gap-2 text-sm font-semibold">
             Apnee
             <input
               name="retenueSec"
               type="number"
               min="0"
               defaultValue={0}
-              className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+              className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </label>
-          <label className="grid gap-2 text-sm font-semibold text-foreground">
+          <label className="text-foreground grid gap-2 text-sm font-semibold">
             Expiration
             <input
               name="expirationSec"
               type="number"
               min="1"
               required
-              className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+              className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
           </label>
           <div className="flex items-end">
-            <button className="h-10 rounded-lg bg-brand px-4 text-sm font-bold text-white transition-colors hover:bg-brand-dark">
+            <button className="bg-brand hover:bg-brand-dark h-10 w-full rounded-lg px-4 text-sm font-bold text-white transition-colors lg:w-auto">
               Ajouter
             </button>
           </div>
         </form>
       </section>
 
-      <section className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border p-5">
-          <h2 className="font-heading text-xl font-bold text-foreground">
+      <section className="border-border bg-card rounded-lg border">
+        <div className="border-border border-b p-5">
+          <h2 className="font-heading text-foreground text-lg font-bold text-balance sm:text-xl">
             Exercices disponibles
           </h2>
         </div>
-        <div className="divide-y divide-border">
+        <div className="divide-border divide-y">
           {exercises.map((exercise) => (
             <div
               key={exercise.id}
-              className="grid gap-3 p-4 lg:grid-cols-[1fr_120px_120px_120px_auto]"
+              className="grid min-w-0 gap-3 p-4 lg:grid-cols-[minmax(0,1fr)_120px_120px_120px_auto]"
             >
               <form action={upsertRespirationExercise} className="contents">
                 <input type="hidden" name="id" value={exercise.id} />
                 <input
                   name="titre"
                   defaultValue={exercise.titre}
-                  className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                  className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
                 />
                 <input
                   name="inspirationSec"
                   type="number"
                   min="1"
                   defaultValue={exercise.inspirationSec}
-                  className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                  className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
                 />
                 <input
                   name="retenueSec"
                   type="number"
                   min="0"
                   defaultValue={exercise.retenueSec}
-                  className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                  className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
                 />
                 <input
                   name="expirationSec"
                   type="number"
                   min="1"
                   defaultValue={exercise.expirationSec}
-                  className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                  className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
                 />
-                <button className="h-10 rounded-lg border border-border px-3 text-sm font-bold text-foreground transition-colors hover:bg-secondary">
+                <button className="border-border text-foreground hover:bg-secondary h-10 rounded-lg border px-3 text-sm font-bold transition-colors">
                   Enregistrer
                 </button>
               </form>
-              <form action={deleteRespirationExercise} className="lg:col-start-5">
+              <form
+                action={deleteRespirationExercise}
+                className="lg:col-start-5"
+              >
                 <input type="hidden" name="id" value={exercise.id} />
-                <button className="h-10 rounded-lg bg-destructive/10 px-3 text-sm font-bold text-destructive transition-colors hover:bg-destructive/20">
+                <button className="bg-destructive/10 text-destructive hover:bg-destructive/20 h-10 w-full rounded-lg px-3 text-sm font-bold transition-colors lg:w-auto">
                   Supprimer
                 </button>
               </form>
             </div>
           ))}
           {exercises.length === 0 && (
-            <p className="p-5 text-sm text-muted-foreground">
+            <p className="text-muted-foreground p-5 text-sm">
               Aucun exercice configure.
             </p>
           )}

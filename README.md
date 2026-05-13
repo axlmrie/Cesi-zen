@@ -1,29 +1,44 @@
-# Create T3 App
+# CESIZen
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+Prototype web CESIZen pour le Bloc 2 "Developper et tester les applications informatiques".
 
-## What's next? How do I make an app with this?
+## Couverture de la consigne
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- Comptes utilisateurs : inscription, connexion, profil, changement de mot de passe, export/suppression RGPD, gestion admin.
+- Informations : pages publiees, menus front-office, administration des contenus.
+- Diagnostic de stress : questionnaire public, scoring, sauvegarde pour utilisateur connecte, configuration admin.
+- Respiration : exercices publics configurables par l'administrateur.
+- Tracker emotions : journal utilisateur et referentiel admin, hors module principal retenu pour la recette.
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+Une application mobile n'est pas requise par la consigne fournie : le livrable attendu est un prototype fonctionnel d'application, et ce depot le couvre sous forme d'application web.
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+## Installation rapide
 
-## Learn More
+```bash
+pnpm install
+cp .env.example .env
+docker compose up -d
+pnpm db:push
+pnpm exec prisma db seed
+pnpm dev
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+## Verification qualite
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+```bash
+pnpm check
+```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+La commande execute :
 
-## How do I deploy this?
+- `pnpm lint`
+- `pnpm typecheck`
+- `pnpm test:unit`
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+## Documentation livrable
+
+- [Conception base de donnees](docs/conception-base-donnees.md)
+- [Documentation technique](docs/documentation-technique.md)
+- [Cahier de tests](docs/cahier-tests.md)
+- [Procedure de validation et PV de recette](docs/procedure-validation.md)
+- [Qualite de code ESLint et Prettier](docs/qualite-code.md)

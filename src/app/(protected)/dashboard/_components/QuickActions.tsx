@@ -28,24 +28,26 @@ const actions = [
 export function QuickActions() {
   return (
     <section>
-      <h2 className="text-xl font-bold mb-4 px-1">Outils rapides</h2>
+      <h2 className="mb-4 px-1 text-xl font-bold">Outils rapides</h2>
       <div className="grid gap-4">
         {actions.map((action) => (
-          <Link 
-            key={action.title} 
+          <Link
+            key={action.title}
             href={action.href}
-            className="group flex items-center justify-between p-5 bg-card border border-border rounded-2xl hover:border-brand/50 transition-all hover:shadow-md"
+            className="group border-border bg-card hover:border-brand/50 flex items-start justify-between gap-4 rounded-2xl border p-4 transition-all hover:shadow-md sm:items-center sm:p-5"
           >
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl text-white ${action.color}`}>
+            <div className="flex min-w-0 items-start gap-4 sm:items-center">
+              <div
+                className={`shrink-0 rounded-xl p-3 text-white ${action.color}`}
+              >
                 <action.icon className="h-6 w-6" />
               </div>
-              <div>
-                <h4 className="font-bold text-foreground">{action.title}</h4>
-                <p className="text-sm text-muted-foreground">{action.desc}</p>
+              <div className="min-w-0">
+                <h4 className="text-foreground font-bold">{action.title}</h4>
+                <p className="text-muted-foreground text-sm">{action.desc}</p>
               </div>
             </div>
-            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-brand group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="text-muted-foreground group-hover:text-brand mt-3 h-5 w-5 shrink-0 transition-all group-hover:translate-x-1 sm:mt-0" />
           </Link>
         ))}
       </div>

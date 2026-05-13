@@ -14,51 +14,57 @@ export default async function AdminEmotionsPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand">
+      <header className="min-w-0">
+        <p className="text-brand text-sm font-semibold tracking-wide uppercase">
           Tracker des emotions
         </p>
-        <h1 className="mt-2 font-heading text-3xl font-bold text-foreground">
+        <h1 className="font-heading text-foreground mt-2 text-2xl font-bold text-balance sm:text-3xl">
           Referentiel des emotions
         </h1>
-        <p className="mt-2 max-w-3xl text-muted-foreground">
+        <p className="text-muted-foreground mt-2 max-w-3xl">
           Configurez les emotions de base et les emotions de niveau 2
           disponibles dans le journal de bord des utilisateurs.
         </p>
       </header>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h2 className="font-heading text-xl font-bold text-foreground">
+        <div className="border-border bg-card rounded-lg border p-4 sm:p-5">
+          <h2 className="font-heading text-foreground text-lg font-bold text-balance sm:text-xl">
             Nouvelle emotion de base
           </h2>
-          <form action={upsertEmotionNiveau1} className="mt-5 flex gap-3">
+          <form
+            action={upsertEmotionNiveau1}
+            className="mt-5 flex flex-col gap-3 sm:flex-row"
+          >
             <input
               name="libelle"
               required
-              className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+              className="border-border bg-background focus:ring-brand/30 h-10 min-w-0 flex-1 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
-            <button className="h-10 rounded-lg bg-brand px-4 text-sm font-bold text-white transition-colors hover:bg-brand-dark">
+            <button className="bg-brand hover:bg-brand-dark h-10 rounded-lg px-4 text-sm font-bold text-white transition-colors">
               Ajouter
             </button>
           </form>
         </div>
 
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h2 className="font-heading text-xl font-bold text-foreground">
+        <div className="border-border bg-card rounded-lg border p-4 sm:p-5">
+          <h2 className="font-heading text-foreground text-lg font-bold text-balance sm:text-xl">
             Nouvelle emotion niveau 2
           </h2>
-          <form action={upsertEmotionNiveau2} className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+          <form
+            action={upsertEmotionNiveau2}
+            className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+          >
             <input
               name="libelle"
               required
               placeholder="Ex. Serenite"
-              className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+              className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             />
             <select
               name="emotionN1Id"
               required
-              className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+              className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
             >
               <option value="">Emotion de base</option>
               {emotionGroups.map((emotion) => (
@@ -67,7 +73,7 @@ export default async function AdminEmotionsPage() {
                 </option>
               ))}
             </select>
-            <button className="h-10 rounded-lg bg-brand px-4 text-sm font-bold text-white transition-colors hover:bg-brand-dark">
+            <button className="bg-brand hover:bg-brand-dark h-10 rounded-lg px-4 text-sm font-bold text-white transition-colors">
               Ajouter
             </button>
           </form>
@@ -78,23 +84,26 @@ export default async function AdminEmotionsPage() {
         {emotionGroups.map((emotion) => (
           <article
             key={emotion.id}
-            className="rounded-lg border border-border bg-card p-5"
+            className="border-border bg-card rounded-lg border p-4 sm:p-5"
           >
             <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
-              <form action={upsertEmotionNiveau1} className="flex gap-3">
+              <form
+                action={upsertEmotionNiveau1}
+                className="flex flex-col gap-3 sm:flex-row"
+              >
                 <input type="hidden" name="id" value={emotion.id} />
                 <input
                   name="libelle"
                   defaultValue={emotion.libelle}
-                  className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-brand/30"
+                  className="border-border bg-background focus:ring-brand/30 h-10 min-w-0 flex-1 rounded-lg border px-3 text-sm font-semibold outline-none focus:ring-2"
                 />
-                <button className="h-10 rounded-lg border border-border px-3 text-sm font-bold text-foreground transition-colors hover:bg-secondary">
+                <button className="border-border text-foreground hover:bg-secondary h-10 rounded-lg border px-3 text-sm font-bold transition-colors">
                   Renommer
                 </button>
               </form>
               <form action={deleteEmotionNiveau1}>
                 <input type="hidden" name="id" value={emotion.id} />
-                <button className="h-10 rounded-lg bg-destructive/10 px-3 text-sm font-bold text-destructive transition-colors hover:bg-destructive/20">
+                <button className="bg-destructive/10 text-destructive hover:bg-destructive/20 h-10 rounded-lg px-3 text-sm font-bold transition-colors">
                   Supprimer
                 </button>
               </form>
@@ -104,19 +113,19 @@ export default async function AdminEmotionsPage() {
               {emotion.emotionsN2.map((subEmotion) => (
                 <div
                   key={subEmotion.id}
-                  className="grid gap-3 rounded-lg border border-border p-3 lg:grid-cols-[1fr_220px_auto]"
+                  className="border-border grid min-w-0 gap-3 rounded-lg border p-3 lg:grid-cols-[minmax(0,1fr)_220px_auto]"
                 >
                   <form action={upsertEmotionNiveau2} className="contents">
                     <input type="hidden" name="id" value={subEmotion.id} />
                     <input
                       name="libelle"
                       defaultValue={subEmotion.libelle}
-                      className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                      className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
                     />
                     <select
                       name="emotionN1Id"
                       defaultValue={emotion.id}
-                      className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                      className="border-border bg-background focus:ring-brand/30 h-10 rounded-lg border px-3 text-sm outline-none focus:ring-2"
                     >
                       {emotionGroups.map((group) => (
                         <option key={group.id} value={group.id}>
@@ -124,20 +133,23 @@ export default async function AdminEmotionsPage() {
                         </option>
                       ))}
                     </select>
-                    <button className="h-10 rounded-lg border border-border px-3 text-sm font-bold text-foreground transition-colors hover:bg-secondary">
+                    <button className="border-border text-foreground hover:bg-secondary h-10 rounded-lg border px-3 text-sm font-bold transition-colors">
                       Enregistrer
                     </button>
                   </form>
-                  <form action={deleteEmotionNiveau2} className="lg:col-start-3">
+                  <form
+                    action={deleteEmotionNiveau2}
+                    className="lg:col-start-3"
+                  >
                     <input type="hidden" name="id" value={subEmotion.id} />
-                    <button className="h-10 rounded-lg bg-destructive/10 px-3 text-sm font-bold text-destructive transition-colors hover:bg-destructive/20">
+                    <button className="bg-destructive/10 text-destructive hover:bg-destructive/20 h-10 w-full rounded-lg px-3 text-sm font-bold transition-colors lg:w-auto">
                       Supprimer
                     </button>
                   </form>
                 </div>
               ))}
               {emotion.emotionsN2.length === 0 && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Aucune emotion niveau 2 associee.
                 </p>
               )}
@@ -145,7 +157,7 @@ export default async function AdminEmotionsPage() {
           </article>
         ))}
         {emotionGroups.length === 0 && (
-          <div className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
+          <div className="border-border bg-card text-muted-foreground rounded-lg border p-5 text-sm">
             Aucune emotion configuree.
           </div>
         )}

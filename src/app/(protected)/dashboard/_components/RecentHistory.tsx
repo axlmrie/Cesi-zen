@@ -12,11 +12,11 @@ export type HistoryItem = {
 export function RecentHistory({ items }: { items: HistoryItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="bg-secondary/50 p-6 rounded-3xl border border-border">
-        <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
-          <Clock className="h-5 w-5 text-brand" /> Historique récent
+      <div className="border-border bg-secondary/50 rounded-3xl border p-5 sm:p-6">
+        <h3 className="text-foreground mb-2 flex items-center gap-2 font-bold">
+          <Clock className="text-brand h-5 w-5" /> Historique récent
         </h3>
-        <p className="text-sm text-muted-foreground italic mt-4 text-center">
+        <p className="text-muted-foreground mt-4 text-center text-sm italic">
           Aucune activité récente. Commencez par faire un diagnostic !
         </p>
       </div>
@@ -24,23 +24,39 @@ export function RecentHistory({ items }: { items: HistoryItem[] }) {
   }
 
   return (
-    <div className="bg-secondary/50 p-6 rounded-3xl border border-border">
-      <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-        <Clock className="h-5 w-5 text-brand" /> Historique récent
+    <div className="border-border bg-secondary/50 rounded-3xl border p-5 sm:p-6">
+      <h3 className="text-foreground mb-4 flex items-center gap-2 font-bold">
+        <Clock className="text-brand h-5 w-5" /> Historique récent
       </h3>
-      
+
       <div className="space-y-4">
         {items.map((item) => (
-          <div key={item.id} className="flex items-start gap-3 bg-background p-3 rounded-2xl border border-border/50 shadow-sm">
-            <div className={`p-2 rounded-xl mt-0.5 ${item.type === "diagnostic" ? "bg-brand/10 text-brand" : "bg-blue-50 text-blue-500"}`}>
-              {item.type === "diagnostic" ? <ClipboardCheck className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}
+          <div
+            key={item.id}
+            className="border-border/50 bg-background flex min-w-0 items-start gap-3 rounded-2xl border p-3 shadow-sm"
+          >
+            <div
+              className={`mt-0.5 shrink-0 rounded-xl p-2 ${item.type === "diagnostic" ? "bg-brand/10 text-brand" : "bg-blue-50 text-blue-500"}`}
+            >
+              {item.type === "diagnostic" ? (
+                <ClipboardCheck className="h-4 w-4" />
+              ) : (
+                <BookOpen className="h-4 w-4" />
+              )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-foreground truncate">{item.title}</p>
-              <p className="text-xs text-muted-foreground truncate">{item.desc}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-foreground truncate text-sm font-bold">
+                {item.title}
+              </p>
+              <p className="text-muted-foreground truncate text-xs">
+                {item.desc}
+              </p>
             </div>
-            <div className="text-[10px] text-muted-foreground whitespace-nowrap pt-1 font-medium">
-              {item.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            <div className="text-muted-foreground pt-1 text-[10px] font-medium whitespace-nowrap">
+              {item.date.toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "short",
+              })}
             </div>
           </div>
         ))}

@@ -2,11 +2,7 @@
 
 import { ErrorState } from "@/components/ErrorState";
 
-export default function Error({
-  reset,
-}: {
-  reset: () => void;
-}) {
+export default function Error({ reset }: { reset: () => void }) {
   return (
     <ErrorState
       eyebrow="Erreur temporaire"

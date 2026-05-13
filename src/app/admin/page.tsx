@@ -1,11 +1,5 @@
 import Link from "next/link";
-import {
-  BookOpenText,
-  ClipboardList,
-  Smile,
-  Users,
-  Wind,
-} from "lucide-react";
+import { BookOpenText, ClipboardList, Smile, Users, Wind } from "lucide-react";
 
 import { db } from "@/server/db";
 
@@ -70,14 +64,14 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand">
+      <header className="min-w-0">
+        <p className="text-brand text-sm font-semibold tracking-wide uppercase">
           Back-office securise
         </p>
-        <h1 className="mt-2 font-heading text-3xl font-bold text-foreground">
+        <h1 className="font-heading text-foreground mt-2 text-2xl font-bold text-balance sm:text-3xl">
           Pilotage de la solution CESIZen
         </h1>
-        <p className="mt-2 max-w-3xl text-muted-foreground">
+        <p className="text-muted-foreground mt-2 max-w-3xl">
           Cet espace couvre les modules demandes dans le sujet : comptes,
           informations, diagnostic, respiration et referentiel des emotions.
         </p>
@@ -87,10 +81,10 @@ export default async function AdminDashboardPage() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="rounded-lg border border-border bg-card p-5"
+            className="border-border bg-card min-w-0 rounded-lg border p-5"
           >
-            <p className="text-sm text-muted-foreground">{stat.label}</p>
-            <p className="mt-2 text-3xl font-bold text-foreground">
+            <p className="text-muted-foreground text-sm">{stat.label}</p>
+            <p className="text-foreground mt-2 text-3xl font-bold">
               {stat.value}
             </p>
           </div>
@@ -105,17 +99,17 @@ export default async function AdminDashboardPage() {
             <Link
               key={module.href}
               href={module.href}
-              className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-brand/40 hover:bg-brand/5"
+              className="border-border bg-card hover:border-brand/40 hover:bg-brand/5 min-w-0 rounded-lg border p-5 transition-colors"
             >
-              <div className="flex items-start gap-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
+              <div className="flex min-w-0 items-start gap-4">
+                <span className="bg-brand/10 text-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
                   <Icon className="h-5 w-5" />
                 </span>
-                <span>
-                  <span className="block font-heading text-lg font-bold text-foreground">
+                <span className="min-w-0">
+                  <span className="font-heading text-foreground block text-lg font-bold text-balance">
                     {module.label}
                   </span>
-                  <span className="mt-1 block text-sm text-muted-foreground">
+                  <span className="text-muted-foreground mt-1 block text-sm">
                     {module.description}
                   </span>
                 </span>

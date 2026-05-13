@@ -29,17 +29,26 @@ const stats = [
 
 export function StatsOverview() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mb-10 lg:grid-cols-3 lg:gap-6">
       {stats.map((stat) => (
-        <div key={stat.label} className="bg-card border border-border p-6 rounded-3xl shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-2xl ${stat.bg}`}>
+        <div
+          key={stat.label}
+          className="border-border bg-card rounded-3xl border p-5 shadow-sm sm:p-6"
+        >
+          <div className="flex min-w-0 items-center gap-4">
+            <div className={`shrink-0 rounded-2xl p-3 ${stat.bg}`}>
               <stat.icon className={`h-6 w-6 ${stat.color}`} />
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-              <h3 className="text-xl font-bold text-foreground">{stat.value}</h3>
-              <p className="text-xs text-muted-foreground mt-1">{stat.subValue}</p>
+            <div className="min-w-0">
+              <p className="text-muted-foreground text-sm font-medium">
+                {stat.label}
+              </p>
+              <h3 className="text-foreground text-xl font-bold">
+                {stat.value}
+              </h3>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {stat.subValue}
+              </p>
             </div>
           </div>
         </div>
