@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  buildRgpdAnonymizedUserData,
   cleanOptionalNote,
+  createDeletedAccountEmail,
   createSlug,
   determineStressLevel,
   validateProfileUpdate,
@@ -68,5 +70,28 @@ void describe("CESIZen domain rules", () => {
         }),
       /13 et 120/,
     );
+  });
+
+  void it("builds deterministic anonymized data for RGPD account deletion", () => {
+    assert.equal(
+      createDeletedAccountEmail("user-123"),
+      "deleted-user-123@deleted.local",
+    );
+
+    assert.deepEqual(buildRgpdAnonymizedUserData("user-123"), {
+      name: "Compte supprime",
+      email: "deleted-user-123@deleted.local",
+      emailVerified: false,
+      image: null,
+      firstName: "Compte",
+      lastName: "Supprime",
+      age: null,
+      isActif: false,
+      dateConsentement: null,
+    });
+  });
+
+  void it("rejects empty identifiers for RGPD anonymization", () => {
+    assert.throws(() => createDeletedAccountEmail("   "), /obligatoire/);
   });
 });

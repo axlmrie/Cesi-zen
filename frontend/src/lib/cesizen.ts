@@ -54,6 +54,30 @@ export function validateProfileUpdate(input: ProfileUpdateInput) {
   };
 }
 
+export function createDeletedAccountEmail(userId: string) {
+  const normalizedId = userId.trim();
+
+  if (!normalizedId) {
+    throw new Error("L'identifiant utilisateur est obligatoire.");
+  }
+
+  return `deleted-${normalizedId}@deleted.local`;
+}
+
+export function buildRgpdAnonymizedUserData(userId: string) {
+  return {
+    name: "Compte supprime",
+    email: createDeletedAccountEmail(userId),
+    emailVerified: false,
+    image: null,
+    firstName: "Compte",
+    lastName: "Supprime",
+    age: null,
+    isActif: false,
+    dateConsentement: null,
+  };
+}
+
 export function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error && error.message ? error.message : fallback;
 }

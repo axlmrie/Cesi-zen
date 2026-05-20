@@ -1,6 +1,8 @@
 # Cahier de tests CESIZen
 
-Ce cahier couvre les deux modules obligatoires et le module diagnostic retenu comme module au choix.
+Derniere mise a jour : 20/05/2026
+
+Ce cahier couvre les modules obligatoires comptes utilisateurs et informations, ainsi que les modules diagnostic, respiration et journal d'emotions retenus dans le prototype.
 
 ## Tests unitaires automatises
 
@@ -10,15 +12,25 @@ Commande :
 pnpm test:unit
 ```
 
-| ID    | Module       | Scenario                                                    | Resultat attendu                          |
-| ----- | ------------ | ----------------------------------------------------------- | ----------------------------------------- |
-| UT-01 | Informations | Generer un slug depuis un titre avec espaces et ponctuation | Le slug est stable et compatible URL.     |
-| UT-02 | Diagnostic   | Classer un score inferieur a 150                            | Niveau `Faible`.                          |
-| UT-03 | Diagnostic   | Classer un score entre 150 et 299                           | Niveau `Modere`.                          |
-| UT-04 | Diagnostic   | Classer un score superieur ou egal a 300                    | Niveau `Eleve`.                           |
-| UT-05 | Diagnostic   | Refuser un score negatif ou invalide                        | Une erreur explicite est levee.           |
-| UT-06 | Comptes      | Normaliser une mise a jour de profil valide                 | Prenom, nom et nom complet sont nettoyes. |
-| UT-07 | Comptes      | Refuser un profil incomplet ou un age inferieur a 13 ans    | Une erreur de validation est retournee.   |
+| ID    | Module       | Scenario                                                    | Resultat attendu                                                    |
+| ----- | ------------ | ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| UT-01 | Informations | Generer un slug depuis un titre avec espaces et ponctuation | Le slug est stable et compatible URL.                               |
+| UT-02 | Diagnostic   | Classer un score inferieur a 150                            | Niveau `Faible`.                                                    |
+| UT-03 | Diagnostic   | Classer un score entre 150 et 299                           | Niveau `Modere`.                                                    |
+| UT-04 | Diagnostic   | Classer un score superieur ou egal a 300                    | Niveau `Eleve`.                                                     |
+| UT-05 | Diagnostic   | Refuser un score negatif ou invalide                        | Une erreur explicite est levee.                                     |
+| UT-06 | Comptes      | Normaliser une mise a jour de profil valide                 | Prenom, nom et nom complet sont nettoyes.                           |
+| UT-07 | Comptes      | Refuser un profil incomplet ou un age inferieur a 13 ans    | Une erreur de validation est retournee.                             |
+| UT-08 | Journal      | Nettoyer une note de journal vide ou renseignee             | Une note vide devient `null`, sinon elle est trimmee.               |
+| UT-09 | RGPD         | Construire les donnees anonymisees de suppression de compte | Email anonymise, compte inactif, donnees personnelles neutralisees. |
+| UT-10 | RGPD         | Refuser une anonymisation sans identifiant utilisateur      | Une erreur explicite est levee.                                     |
+
+## Liste des tests unitaires ajoutes ou mis a jour
+
+| Date       | Fichier                      | Tests concernes | Objet                                                                                                 |
+| ---------- | ---------------------------- | --------------- | ----------------------------------------------------------------------------------------------------- |
+| 20/05/2026 | `tests/unit/cesizen.test.ts` | UT-08           | Ajout au rapport du test deja present sur le nettoyage des notes de journal.                          |
+| 20/05/2026 | `tests/unit/cesizen.test.ts` | UT-09, UT-10    | Ajout des tests unitaires couvrant l'anonymisation RGPD utilisee par la suppression de compte mobile. |
 
 ## Tests fonctionnels manuels
 

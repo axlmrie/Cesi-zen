@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { buildRgpdAnonymizedUserData } from "@/lib/cesizen";
 import { db } from "@/server/db";
 
 import {
@@ -20,8 +21,6 @@ export async function DELETE(request: NextRequest) {
     return unauthorizedResponse(request);
   }
 
-  const anonymizedEmail = `deleted-${session.user.id}@deleted.local`;
-
   await db.$transaction([
     db.journalEmotion.deleteMany({
       where: { utilisateurId: session.user.id },
@@ -40,22 +39,13 @@ export async function DELETE(request: NextRequest) {
     }),
     db.user.update({
       where: { id: session.user.id },
-      data: {
-        name: "Compte supprimé",
-        email: anonymizedEmail,
-        emailVerified: false,
-        image: null,
-        firstName: "Compte",
-        lastName: "Supprimé",
-        age: null,
-        isActif: false,
-        dateConsentement: null,
-      },
+      data: buildRgpdAnonymizedUserData(session.user.id),
     }),
   ]);
 
   return jsonResponse(request, {
     success: true,
-    message: "Votre compte a été anonymisé et vos données personnelles ont été supprimées.",
+    message:
+      "Votre compte a été anonymisé et vos données personnelles ont été supprimées.",
   });
 }
