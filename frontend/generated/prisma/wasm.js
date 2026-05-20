@@ -257,7 +257,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\a.marie\\OneDrive - Calip Normandie\\Documents\\CESI\\CesiZen\\generated\\prisma",
+      "value": "C:\\Users\\a.marie\\Downloads\\Cesi-zen\\frontend\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -271,7 +271,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\a.marie\\OneDrive - Calip Normandie\\Documents\\CESI\\CesiZen\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\a.marie\\Downloads\\Cesi-zen\\frontend\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
