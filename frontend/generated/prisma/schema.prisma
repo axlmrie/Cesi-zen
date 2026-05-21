@@ -2,8 +2,9 @@
 // learn more: https://better-auth.com/docs/concepts/database
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "darwin-arm64", "windows"]
+  output        = "../generated/prisma"
 }
 
 datasource db {

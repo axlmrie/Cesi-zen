@@ -5,7 +5,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "@/server/db";
 
 const appBaseURL = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
-const mobileHost = process.env.MOBILE_DEV_HOST ?? "172.20.10.4";
+const mobileHost = process.env.MOBILE_DEV_HOST ?? "172.20.10.2";
 
 export const auth = betterAuth({
   baseURL: appBaseURL,
