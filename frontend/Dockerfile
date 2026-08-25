@@ -23,12 +23,20 @@ RUN pnpm install --frozen-lockfile
 FROM dependencies AS prisma-cli
 
 # Install the exact CLI version resolved by pnpm so runtime migrations never
-# download an unpinned package through npx.
+# download an unpinned package through npx. A prefix-local installation keeps
+# Prisma and all of its runtime dependencies (including @prisma/engines) in one
+# self-contained directory that can safely be copied to the final image.
 RUN PRISMA_VERSION="$(node --print "require('./node_modules/prisma/package.json').version")" \
-  && npm install --global --omit=dev "prisma@${PRISMA_VERSION}" \
+  && npm install \
+    --prefix /opt/prisma-cli \
+    --omit=dev \
+    --no-package-lock \
+    --no-save \
+    "prisma@${PRISMA_VERSION}" \
+  && /opt/prisma-cli/node_modules/.bin/prisma --version \
   && npm cache clean --force
 
-FROM base AS builder
+FROM dependencies AS builder
 
 ENV NEXT_TELEMETRY_DISABLED="1"
 ENV SKIP_ENV_VALIDATION="1"
@@ -36,8 +44,6 @@ ENV DATABASE_URL="mysql://build:build@127.0.0.1:3306/build"
 ENV BETTER_AUTH_SECRET="build-only-placeholder-not-a-runtime-secret"
 ENV BETTER_AUTH_URL="http://localhost:3000"
 
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=dependencies /app/generated ./generated
 COPY . .
 
 RUN pnpm build
@@ -55,7 +61,7 @@ ENV HOSTNAME="0.0.0.0"
 ENV PORT="3000"
 ENV APP_VERSION="$APP_VERSION"
 ENV HOME="/home/nextjs"
-ENV PATH="/app/node_modules/.bin:${PATH}"
+ENV PATH="/app/node_modules/.bin:/opt/prisma-cli/node_modules/.bin:${PATH}"
 ENV NPM_CONFIG_OFFLINE="true"
 ENV NPM_CONFIG_UPDATE_NOTIFIER="false"
 
@@ -68,8 +74,7 @@ RUN apt-get update \
   && useradd --system --uid 1001 --gid nodejs --create-home \
     --home-dir /home/nextjs nextjs
 
-COPY --from=prisma-cli /usr/local/lib/node_modules/prisma /usr/local/lib/node_modules/prisma
-COPY --from=prisma-cli /usr/local/bin/prisma /usr/local/bin/prisma
+COPY --from=prisma-cli --chown=nextjs:nodejs /opt/prisma-cli /opt/prisma-cli
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
@@ -79,7 +84,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
 RUN mkdir -p /app/node_modules/.bin \
-  && ln --symbolic --force /usr/local/bin/prisma /app/node_modules/.bin/prisma \
+  && ln --symbolic --force \
+    /opt/prisma-cli/node_modules/prisma/build/index.js \
+    /app/node_modules/.bin/prisma \
   && chown nextjs:nodejs /app/node_modules/.bin \
   && chown --no-dereference nextjs:nodejs /app/node_modules/.bin/prisma
 
