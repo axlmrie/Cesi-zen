@@ -80,14 +80,24 @@ wait_for_application_http() {
   record_event "http-health:${container_name}:${current_image}"
 
   if [[ "${current_image}" == cesizen-rollback:* ]]; then
-    [[ "${TEST_FAIL_STAGE}" != rollback-health && \
-      "${TEST_FAIL_STAGE}" != target-and-rollback-health && \
-      "${TEST_FAIL_STAGE}" != migration-and-rollback-health ]]
-    return
+    case "${TEST_FAIL_STAGE}" in
+      rollback-health | target-and-rollback-health | migration-and-rollback-health)
+        return 1
+        ;;
+      *)
+        return 0
+        ;;
+    esac
   fi
 
-  [[ "${TEST_FAIL_STAGE}" != target-health && \
-    "${TEST_FAIL_STAGE}" != target-and-rollback-health ]]
+  case "${TEST_FAIL_STAGE}" in
+    target-health | target-and-rollback-health)
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
+  esac
 }
 
 handle_compose() {
