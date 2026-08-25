@@ -62,14 +62,14 @@ ENV PORT="3000"
 ENV APP_VERSION="$APP_VERSION"
 ENV HOME="/home/nextjs"
 ENV PATH="/app/node_modules/.bin:/opt/prisma-cli/node_modules/.bin:${PATH}"
-ENV NPM_CONFIG_OFFLINE="true"
-ENV NPM_CONFIG_UPDATE_NOTIFIER="false"
 
 WORKDIR /app
 
 RUN apt-get update \
   && apt-get install --yes --no-install-recommends ca-certificates openssl \
   && rm -rf /var/lib/apt/lists/* \
+  && rm --recursive --force /usr/local/lib/node_modules/npm \
+  && rm --force /usr/local/bin/npm /usr/local/bin/npx \
   && groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs --create-home \
     --home-dir /home/nextjs nextjs
@@ -92,9 +92,11 @@ RUN mkdir -p /app/node_modules/.bin \
 
 USER nextjs
 
-# This build-time assertion proves that the imposed deployment command resolves
-# the bundled CLI as the non-root runtime user without registry access.
-RUN npx prisma --version
+# The runtime invokes the bundled CLI directly, so npm/npx can stay out of the
+# production attack surface. This assertion checks both properties at build time.
+RUN ! command -v npm \
+  && ! command -v npx \
+  && prisma --version
 
 EXPOSE 3000
 

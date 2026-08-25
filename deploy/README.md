@@ -209,16 +209,17 @@ Le déploiement exécute les migrations présentes dans l'image cible avant de r
 schéma et tout le dossier `/app/prisma/migrations`. Depuis `/app`, le script exécute :
 
 ```bash
-npx prisma migrate deploy
+prisma migrate deploy
 ```
 
 Elle s'exécute dans un conteneur Compose ponctuel construit à partir de la même
 référence GHCR immuable que l'application. Compose lui injecte `.env.production` et le
 connecte à `cesizen-backend`. Aucune migration n'est exécutée par le runner lui-même
-et la base n'est jamais exposée à GitHub. Un lien local dans `node_modules/.bin` et le
-mode npm hors ligne garantissent que `npx` utilise la CLI déjà installée dans l'image,
-sans télécharger de paquet au moment du déploiement. Prisma découvre alors
-`/app/prisma/schema.prisma` et son historique automatiquement.
+et la base n'est jamais exposée à GitHub. Un lien local dans `node_modules/.bin`
+expose directement la CLI déjà installée dans l'image, sans télécharger de paquet au
+moment du déploiement. `npm` et `npx` sont retirés de l'image finale afin de réduire sa
+surface d'attaque. Prisma découvre alors `/app/prisma/schema.prisma` et son historique
+automatiquement.
 
 Le conteneur `cesizen-web` rejoint le réseau Docker externe défini par
 `DATABASE_NETWORK` (`db-tier` par défaut). Le conteneur MariaDB partagé doit rejoindre
