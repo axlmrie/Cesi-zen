@@ -1,0 +1,4 @@
+# Labels personnalises disponibles sur le runner de production auto-heberge.
+self-hosted-runner:
+  labels:
+    - prod

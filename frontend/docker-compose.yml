@@ -1,0 +1,27 @@
+services:
+  db:
+    image: mariadb:11.4
+    container_name: cesizen-mariadb
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_DATABASE: cesizen_db
+      MARIADB_USER: cesizen_user
+      MARIADB_PASSWORD: cesizen_password
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - cesizen_mariadb_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  cesizen_mariadb_data:

@@ -1,0 +1,514 @@
+name: CI, release et deploiement
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+# Les jobs obtiennent uniquement les droits supplementaires dont ils ont besoin.
+permissions:
+  contents: read
+
+env:
+  DOCKER_PLATFORM: ${{ vars.DOCKER_PLATFORM || 'linux/amd64' }}
+  NODE_VERSION: "22.23.2"
+  PNPM_VERSION: "10.30.0"
+  REGISTRY: ghcr.io
+
+# Les pushes rapproches sur la branche de release sont serialises afin d'eviter
+# deux calculs de version ou deux deploiements concurrents.
+concurrency:
+  group: ci-cd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  frontend-ci:
+    name: CI frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: cesizen_ci
+          MARIADB_USER: cesizen_ci
+          MARIADB_PASSWORD: cesizen_ci
+          MARIADB_RANDOM_ROOT_PASSWORD: "1"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Installer pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Installer Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+          package-manager-cache: false
+
+      - name: Installer les dependances frontend
+        run: pnpm --dir frontend install --frozen-lockfile
+
+      # Le script check regroupe ESLint, Prettier, TypeScript et Vitest.
+      - name: Lint, formatage, types et tests frontend
+        run: pnpm --dir frontend check
+
+      # Ces valeurs ne sont utilisees que pour compiler. Aucune connexion a la
+      # base n'est effectuee pendant le build Next.js.
+      - name: Verifier le build de production frontend
+        env:
+          SKIP_ENV_VALIDATION: "1"
+          DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
+          BETTER_AUTH_SECRET: build-only-placeholder-not-a-runtime-secret
+          BETTER_AUTH_URL: http://localhost:3000
+        run: pnpm --dir frontend build
+
+      # La dette HIGH reste visible, sans rendre la CI inutilisable.
+      - name: Audit des dependances frontend (rapport HIGH et CRITICAL)
+        continue-on-error: true
+        run: pnpm --dir frontend audit --prod --audit-level=high
+
+      - name: Bloquer les dependances frontend critiques
+        run: pnpm --dir frontend audit --prod --audit-level=critical
+
+      - name: Valider le schema et l'historique Prisma
+        env:
+          DATABASE_URL: mysql://cesizen_ci:cesizen_ci@127.0.0.1:3306/cesizen_ci
+        run: |
+          pnpm --dir frontend exec prisma validate
+          test -s frontend/prisma/migrations/0_init/migration.sql
+
+      - name: Tester les migrations sur MariaDB
+        env:
+          DATABASE_URL: mysql://cesizen_ci:cesizen_ci@127.0.0.1:3306/cesizen_ci
+        run: |
+          pnpm --dir frontend exec prisma migrate deploy
+          pnpm --dir frontend exec prisma migrate status
+          pnpm --dir frontend exec tsx tests/integration/mariadb-smoke.ts
+          pnpm --dir frontend exec prisma migrate diff \
+            --from-url "$DATABASE_URL" \
+            --to-schema-datamodel prisma/schema.prisma \
+            --exit-code
+          pnpm --dir frontend exec prisma migrate deploy
+
+  mobile-ci:
+    name: CI application mobile
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Installer pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Installer Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: appli/pnpm-lock.yaml
+          package-manager-cache: false
+
+      - name: Installer les dependances mobiles
+        run: pnpm --dir appli install --frozen-lockfile
+
+      # Le script check regroupe ESLint, TypeScript et Jest/Expo.
+      - name: Lint, types et tests mobiles
+        run: pnpm --dir appli check
+
+      - name: Audit des dependances mobiles (rapport HIGH et CRITICAL)
+        continue-on-error: true
+        run: pnpm --dir appli audit --prod --audit-level=high
+
+      - name: Bloquer les dependances mobiles critiques
+        run: pnpm --dir appli audit --prod --audit-level=critical
+
+  source-security:
+    name: Analyse SecOps du depot
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Premier passage informatif : dependances, secrets et mauvaises configurations.
+      - name: Rapport Trivy HIGH et CRITICAL
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: "0"
+
+      # Second passage servant de barriere de securite avant toute release.
+      - name: Bloquer les failles critiques detectees par Trivy
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
+
+  deployment-ci:
+    name: Validation du deploiement
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verifier la syntaxe et les scenarios de deploiement
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n deploy/common.sh deploy/scripts/*.sh deploy/tests/*.sh frontend/start-database.sh frontend/tests/*.sh
+          shellcheck -x --severity=warning \
+            deploy/common.sh \
+            deploy/scripts/*.sh \
+            deploy/tests/*.test.sh \
+            frontend/start-database.sh \
+            frontend/tests/*.test.sh
+          for test_script in deploy/tests/*.test.sh frontend/tests/*.test.sh; do
+            bash "${test_script}"
+          done
+
+      - name: Valider Docker Compose
+        shell: bash
+        env:
+          CESIZEN_IMAGE: ghcr.io/example/cesizen@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          PRODUCTION_ENV_FILE: ${{ github.workspace }}/deploy/.env.production.example
+        run: |
+          set -euo pipefail
+          docker compose \
+            --project-directory deploy \
+            --env-file deploy/.env.deploy.example \
+            --file deploy/docker-compose.production.yml \
+            config --quiet
+
+  release:
+    name: Version et release GitHub
+    needs:
+      - frontend-ci
+      - mobile-ci
+      - source-security
+      - deployment-ci
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      # Requis par le plugin GitHub de semantic-release.
+      issues: write
+      pull-requests: write
+    outputs:
+      published: ${{ steps.semantic-release.outputs.published }}
+      version: ${{ steps.semantic-release.outputs.version }}
+      tag: ${{ steps.semantic-release.outputs.tag }}
+
+    steps:
+      # L'historique complet et les tags sont indispensables au calcul SemVer.
+      - name: Recuperer tout l'historique Git
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Installer Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+
+      # semantic-release analyse les Conventional Commits, cree le tag vX.Y.Z
+      # et publie les notes dans une Release GitHub. Aucun token PAT n'est requis.
+      - name: Calculer et publier la release
+        id: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          echo "published=false" >> "$GITHUB_OUTPUT"
+          npx --yes semantic-release@25.0.8
+
+  build-image:
+    name: Construire et publier l'image
+    needs:
+      - release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_ref: ${{ steps.immutable-reference.outputs.image_ref }}
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # GHCR impose un nom d'image en minuscules.
+      - name: Calculer le nom de l'image
+        id: image
+        shell: bash
+        run: echo "name=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Se connecter a GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Initialiser l'emulation multi-architecture
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+
+      - name: Initialiser Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Generer les tags et labels OCI
+        id: metadata
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=${{ needs.release.outputs.tag }}
+          labels: |
+            org.opencontainers.image.version=${{ needs.release.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Construire et pousser l'image versionnee
+        id: docker-build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          platforms: ${{ env.DOCKER_PLATFORM }}
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ needs.release.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
+
+      # Le deploiement utilise le digest immuable, pas le tag latest mutable.
+      - name: Produire la reference immuable
+        id: immutable-reference
+        env:
+          IMAGE_NAME: ${{ steps.image.outputs.name }}
+          IMAGE_DIGEST: ${{ steps.docker-build.outputs.digest }}
+        run: echo "image_ref=${IMAGE_NAME}@${IMAGE_DIGEST}" >> "$GITHUB_OUTPUT"
+
+  image-security:
+    name: Scanner l'image publiee
+    needs:
+      - build-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+    env:
+      TRIVY_USERNAME: ${{ github.actor }}
+      TRIVY_PASSWORD: ${{ github.token }}
+
+    steps:
+      - name: Rapport des vulnerabilites HIGH et CRITICAL
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ needs.build-image.outputs.image_ref }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: "0"
+
+      - name: Bloquer une image contenant une faille critique
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ needs.build-image.outputs.image_ref }}
+          scanners: vuln
+          severity: CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
+
+  promote-latest:
+    name: Promouvoir l'image validee
+    needs:
+      - build-image
+      - image-security
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_REF: ${{ needs.build-image.outputs.image_ref }}
+
+    steps:
+      - name: Se connecter a GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Initialiser Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      # latest n'est deplace qu'apres le scan bloquant. La version vX.Y.Z et
+      # le digest restent les references immuables de la release.
+      - name: Promouvoir le digest vers latest
+        shell: bash
+        run: |
+          set -euo pipefail
+          image_name="${IMAGE_REF%@*}"
+          [[ "$IMAGE_REF" == "$image_name"@sha256:* ]]
+          docker buildx imagetools create --tag "$image_name:latest" "$IMAGE_REF"
+
+  deploy:
+    name: Deployer en production
+    needs:
+      - build-image
+      - image-security
+      - promote-latest
+    # Ce runner dedie s'execute directement sur le serveur de production.
+    runs-on: [self-hosted, prod]
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    environment:
+      name: production
+    concurrency:
+      group: cesizen-production
+      cancel-in-progress: false
+    env:
+      IMAGE_REF: ${{ needs.build-image.outputs.image_ref }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/cesizen/deploy' }}
+
+    steps:
+      # Les fichiers .env restent hors du workspace nettoye par checkout.
+      - name: Recuperer les scripts sur le runner de production
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verifier le runner et le repertoire persistant
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_PATH:?Variable DEPLOY_PATH absente}"
+          [[ "$DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]
+          [[ "/$DEPLOY_PATH/" != *"/../"* ]]
+          [[ "$IMAGE_REF" =~ ^ghcr[.]io/[a-z0-9._/-]+@sha256:[a-f0-9]{64}$ ]]
+
+          for command_name in docker install realpath rsync; do
+            command -v "$command_name" > /dev/null
+          done
+          docker info > /dev/null
+          docker compose version > /dev/null
+
+          resolved_deploy_path="$(realpath --canonicalize-missing "$DEPLOY_PATH")"
+          resolved_workspace="$(realpath "$GITHUB_WORKSPACE")"
+          [[ "$resolved_deploy_path" != "/" ]]
+          [[ "$resolved_deploy_path" != "$resolved_workspace" ]]
+          [[ "$resolved_deploy_path" != "$resolved_workspace/"* ]]
+
+          install -d -m 0750 "$resolved_deploy_path"
+          [[ -w "$resolved_deploy_path" ]]
+          [[ -f "$resolved_deploy_path/.env.deploy" ]]
+          [[ -f "$resolved_deploy_path/.env.production" ]]
+
+          echo "DEPLOY_PATH=$resolved_deploy_path" >> "$GITHUB_ENV"
+
+      # Les suppressions sont differees. Les regles protect/exclude conservent
+      # les secrets, le verrou et la route Nginx active sur le serveur.
+      - name: Synchroniser la configuration versionnee
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync \
+            --archive \
+            --no-owner \
+            --no-group \
+            --no-perms \
+            --omit-dir-times \
+            --delete-delay \
+            --delay-updates \
+            --filter='protect /.env.deploy' \
+            --filter='exclude /.env.deploy' \
+            --filter='protect /.env.production' \
+            --filter='exclude /.env.production' \
+            --filter='protect /.deploy.lock' \
+            --filter='exclude /.deploy.lock' \
+            --filter='protect /nginx/runtime/*.conf' \
+            --filter='exclude /nginx/runtime/*.conf' \
+            deploy/ "$DEPLOY_PATH/"
+
+          chmod 0750 "$DEPLOY_PATH" "$DEPLOY_PATH"/scripts/*.sh
+
+      # Le token GHCR en lecture seule est isole du profil Docker persistant du
+      # runner et supprime apres le deploiement, y compris en cas d'echec.
+      - name: Mettre a jour le service local
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_USERNAME: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          docker_config="$(mktemp -d)"
+          chmod 0700 "$docker_config"
+          export DOCKER_CONFIG="$docker_config"
+
+          cleanup_docker_credentials() {
+            docker logout "$REGISTRY" > /dev/null 2>&1 || true
+            rm -f "$docker_config/config.json"
+            rmdir "$docker_config" 2>/dev/null || true
+          }
+          trap cleanup_docker_credentials EXIT
+
+          printf '%s' "$GHCR_TOKEN" | docker login "$REGISTRY" \
+            --username "$GHCR_USERNAME" \
+            --password-stdin
+
+          cd "$DEPLOY_PATH"
+          ./scripts/deploy.sh "$IMAGE_REF"
