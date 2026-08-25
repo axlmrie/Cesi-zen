@@ -32,8 +32,12 @@ pnpm check
 La commande execute :
 
 - `pnpm lint`
+- `pnpm format:check`
 - `pnpm typecheck`
 - `pnpm test:unit`
+
+Les tests automatises utilisent Vitest. Le mode interactif est disponible avec
+`pnpm test:unit:watch`.
 
 ## Documentation livrable
 

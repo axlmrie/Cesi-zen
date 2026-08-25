@@ -4,10 +4,14 @@
 import { auth } from "@/server/better-auth/config";
 import { headers } from "next/headers";
 import { db } from "@/server/db";
-import { determineStressLevel } from "@/lib/cesizen";
+import {
+  getDatabaseDiagnosticEventIds,
+  resolveDiagnostic,
+  webFallbackDiagnosticItems,
+} from "@/lib/diagnostic";
 
 export async function saveDiagnosticScore(
-  scoreParams: number,
+  _scoreParams: number,
   selectedEventIds: string[] = [],
 ) {
   const session = await auth.api.getSession({
@@ -28,32 +32,34 @@ export async function saveDiagnosticScore(
   }
 
   try {
+    const requestedEventIds = getDatabaseDiagnosticEventIds(selectedEventIds);
     const activeEvents =
-      selectedEventIds.length > 0
+      requestedEventIds.length > 0
         ? await db.evenementStress.findMany({
             where: {
-              id: { in: selectedEventIds },
+              id: { in: requestedEventIds },
               isActif: true,
             },
             select: { id: true, points: true },
           })
         : [];
 
-    const score =
-      activeEvents.length > 0
-        ? activeEvents.reduce((sum, event) => sum + event.points, 0)
-        : scoreParams;
+    const diagnostic = resolveDiagnostic(
+      selectedEventIds,
+      activeEvents,
+      webFallbackDiagnosticItems,
+    );
 
     await db.resultatDiagnostic.create({
       data: {
-        scoreTotal: score,
-        niveauStress: determineStressLevel(score),
+        scoreTotal: diagnostic.scoreTotal,
+        niveauStress: diagnostic.niveauStress,
         utilisateurId: session.user.id,
         reponses:
-          activeEvents.length > 0
+          diagnostic.responseEventIds.length > 0
             ? {
-                create: activeEvents.map((event) => ({
-                  evenementId: event.id,
+                create: diagnostic.responseEventIds.map((eventId) => ({
+                  evenementId: eventId,
                 })),
               }
             : undefined,

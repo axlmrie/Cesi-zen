@@ -1,32 +1,7 @@
 import { db } from "@/server/db";
+import { webFallbackDiagnosticItems } from "@/lib/diagnostic";
 
 import { DiagnosticClient } from "./_components/DiagnosticClient";
-
-const fallbackItems = [
-  { id: "fallback-1", label: "Deces du conjoint", points: 100 },
-  { id: "fallback-2", label: "Divorce", points: 73 },
-  { id: "fallback-3", label: "Separation conjugale", points: 65 },
-  { id: "fallback-4", label: "Peine de prison", points: 63 },
-  { id: "fallback-5", label: "Deces d'un proche parent", points: 63 },
-  { id: "fallback-6", label: "Maladie ou accident personnel", points: 53 },
-  { id: "fallback-7", label: "Mariage", points: 50 },
-  { id: "fallback-8", label: "Licenciement professionnel", points: 47 },
-  { id: "fallback-9", label: "Retraite", points: 45 },
-  { id: "fallback-10", label: "Grossesse", points: 40 },
-  { id: "fallback-11", label: "Difficultes sexuelles", points: 39 },
-  {
-    id: "fallback-12",
-    label: "Changement de situation financiere",
-    points: 38,
-  },
-  { id: "fallback-13", label: "Mort d'un ami proche", points: 37 },
-  {
-    id: "fallback-14",
-    label: "Changement de responsabilites au travail",
-    points: 29,
-  },
-  { id: "fallback-15", label: "Demenagement", points: 20 },
-];
 
 const resultFallbacks = {
   faible: {
@@ -69,7 +44,7 @@ export default async function DiagnosticPage() {
           label: event.description,
           points: event.points,
         }))
-      : fallbackItems;
+      : webFallbackDiagnosticItems;
 
   const findResultPage = (slug: string) =>
     resultPages.find((page) => page.slug === slug);

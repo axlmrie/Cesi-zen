@@ -73,6 +73,7 @@ export function buildRgpdAnonymizedUserData(userId: string) {
     firstName: "Compte",
     lastName: "Supprime",
     age: null,
+    role: "USER" as const,
     isActif: false,
     dateConsentement: null,
   };

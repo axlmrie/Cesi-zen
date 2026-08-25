@@ -7,6 +7,9 @@ import { db } from "@/server/db";
 import { NavbarPrivate } from "@/components/NavbarPrivate";
 import { NavbarPublic } from "@/components/NavbarPublic";
 
+// This layout reads the session and database-backed navigation on every request.
+export const dynamic = "force-dynamic";
+
 export default async function DiagnosticLayout({
   children,
 }: {

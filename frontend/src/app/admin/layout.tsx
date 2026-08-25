@@ -13,6 +13,9 @@ import {
 
 import { requireAdminPage } from "@/server/admin";
 
+// Admin authorization must be evaluated at request time, never during a build.
+export const dynamic = "force-dynamic";
+
 const adminLinks = [
   { href: "/admin", label: "Vue generale", icon: Activity },
   { href: "/admin/utilisateurs", label: "Utilisateurs", icon: Users },

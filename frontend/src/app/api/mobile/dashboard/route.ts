@@ -20,26 +20,33 @@ export async function GET(request: NextRequest) {
     return unauthorizedResponse(request);
   }
 
-  const [diagnostics, journals] = await Promise.all([
-    db.resultatDiagnostic.findMany({
-      where: { utilisateurId: session.user.id },
-      orderBy: { dateEvaluation: "desc" },
-      take: 5,
-    }),
-    db.journalEmotion.findMany({
-      where: { utilisateurId: session.user.id },
-      include: { emotionN2: true },
-      orderBy: { dateEnregistrement: "desc" },
-      take: 5,
-    }),
-  ]);
+  const [diagnostics, journals, diagnosticsCount, journalEntriesCount] =
+    await Promise.all([
+      db.resultatDiagnostic.findMany({
+        where: { utilisateurId: session.user.id },
+        orderBy: { dateEvaluation: "desc" },
+        take: 5,
+      }),
+      db.journalEmotion.findMany({
+        where: { utilisateurId: session.user.id },
+        include: { emotionN2: true },
+        orderBy: { dateEnregistrement: "desc" },
+        take: 5,
+      }),
+      db.resultatDiagnostic.count({
+        where: { utilisateurId: session.user.id },
+      }),
+      db.journalEmotion.count({
+        where: { utilisateurId: session.user.id },
+      }),
+    ]);
 
   return jsonResponse(request, {
     diagnostics,
     journals,
     stats: {
-      diagnosticsCount: diagnostics.length,
-      journalEntriesCount: journals.length,
+      diagnosticsCount,
+      journalEntriesCount,
       latestStressScore: diagnostics[0]?.scoreTotal ?? null,
       latestStressLevel: diagnostics[0]?.niveauStress ?? null,
     },

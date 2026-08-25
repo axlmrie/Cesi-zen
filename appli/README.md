@@ -7,14 +7,24 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 1. Install dependencies
 
    ```bash
-   npm install
+   pnpm install --frozen-lockfile
    ```
 
 2. Start the app
 
    ```bash
-   npx expo start
+   pnpm start
    ```
+
+## Validate the mobile app
+
+Run the complete mobile validation before delivery:
+
+```bash
+pnpm check
+```
+
+This command runs Expo lint, the TypeScript typecheck and the Jest suite.
 
 In the output, you'll find options to open the app in a
 

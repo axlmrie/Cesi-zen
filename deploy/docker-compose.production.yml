@@ -1,0 +1,73 @@
+services:
+  cesizen-router:
+    image: "${NGINX_IMAGE:-nginx:1.30.4-alpine}"
+    container_name: cesizen-router
+    restart: unless-stopped
+    init: true
+    volumes:
+      - ./nginx/router.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/runtime:/etc/nginx/routes:ro
+    expose:
+      - "8080"
+    networks:
+      - cesizen-backend
+      - npm-proxy
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -q
+        - -O
+        - /dev/null
+        - http://127.0.0.1:8080/__router_health
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cesizen-web:
+    image: "${CESIZEN_IMAGE:?CESIZEN_IMAGE must contain a full ghcr.io image reference}"
+    container_name: cesizen-web
+    restart: unless-stopped
+    init: true
+    env_file:
+      - "${PRODUCTION_ENV_FILE:-./.env.production}"
+    environment:
+      HOSTNAME: "0.0.0.0"
+      NODE_ENV: production
+      PORT: "3000"
+    expose:
+      - "3000"
+    networks:
+      - cesizen-backend
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3000/api/health', { redirect: 'manual' })
+          .then((response) => process.exit(response.status === 200 ? 0 : 1))
+          .catch(() => process.exit(1))
+      interval: 5s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  cesizen-backend:
+    driver: bridge
+  npm-proxy:
+    external: true
+    name: "${NPM_NETWORK:?NPM_NETWORK must name the external Nginx Proxy Manager network}"

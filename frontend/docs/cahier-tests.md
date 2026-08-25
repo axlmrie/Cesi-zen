@@ -32,6 +32,21 @@ pnpm test:unit
 | 20/05/2026 | `tests/unit/cesizen.test.ts` | UT-08           | Ajout au rapport du test deja present sur le nettoyage des notes de journal.                          |
 | 20/05/2026 | `tests/unit/cesizen.test.ts` | UT-09, UT-10    | Ajout des tests unitaires couvrant l'anonymisation RGPD utilisee par la suppression de compte mobile. |
 
+### Couverture automatisee complementaire
+
+| ID     | Fichier                                     | Garantie couverte                                                                      |
+| ------ | ------------------------------------------- | -------------------------------------------------------------------------------------- |
+| SEC-01 | `tests/unit/cesizen-edge.test.ts`           | Bornes et entrees invalides des regles de score, profil, slug, journal et RGPD.        |
+| SEC-02 | `tests/unit/admin-access.test.ts`           | Acces administrateur reserve aux comptes `ADMIN` actifs.                               |
+| SEC-03 | `tests/unit/admin-user-actions.test.ts`     | Protection transactionnelle du dernier admin actif et revocation des sessions.         |
+| SEC-04 | `tests/unit/diagnostic-security.test.ts`    | Score serveur, payloads invalides et compatibilite des catalogues web/mobile.          |
+| SEC-05 | `tests/unit/profile-actions.test.ts`        | Isolation du profil, changement de mot de passe, export et suppression RGPD.           |
+| SEC-06 | `tests/unit/mobile-profile-route.test.ts`   | Allowlist CORS, compte actif et suppression mobile protegee du dernier admin.          |
+| SEC-07 | `tests/unit/journal-action.test.ts`         | Journal rattache a la session courante, nettoyage des notes et erreur publique stable. |
+| SEC-08 | `tests/unit/mobile-dashboard-route.test.ts` | Isolation des donnees et compteurs globaux independants de la limite d'historique.     |
+| SEC-09 | `tests/unit/rgpd.test.ts`                   | Effacement atomique, role neutralise et retry des conflits de serialisation.           |
+| MOB-01 | `../appli/__tests__/api-client-test.ts`     | Cookies natifs, credentials web, JSON et erreurs reseau du client API mobile.          |
+
 ## Tests fonctionnels manuels
 
 | ID    | Module           | Preconditions           | Etapes                                                                  | Resultat attendu                                                            |

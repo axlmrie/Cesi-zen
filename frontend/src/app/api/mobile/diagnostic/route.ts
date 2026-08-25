@@ -1,6 +1,10 @@
 import type { NextRequest } from "next/server";
 
-import { determineStressLevel } from "@/lib/cesizen";
+import {
+  getDatabaseDiagnosticEventIds,
+  mobileFallbackDiagnosticItems,
+  resolveDiagnostic,
+} from "@/lib/diagnostic";
 import { db } from "@/server/db";
 
 import {
@@ -9,21 +13,6 @@ import {
   optionsResponse,
   unauthorizedResponse,
 } from "../_utils";
-
-const fallbackItems = [
-  { id: "fallback-1", label: "Décès du conjoint", points: 100 },
-  { id: "fallback-2", label: "Divorce", points: 73 },
-  { id: "fallback-3", label: "Séparation conjugale", points: 65 },
-  { id: "fallback-4", label: "Décès d'un proche parent", points: 63 },
-  { id: "fallback-5", label: "Maladie ou accident personnel", points: 53 },
-  { id: "fallback-6", label: "Mariage", points: 50 },
-  { id: "fallback-7", label: "Licenciement professionnel", points: 47 },
-  { id: "fallback-8", label: "Retraite", points: 45 },
-  { id: "fallback-9", label: "Grossesse", points: 40 },
-  { id: "fallback-10", label: "Changement de situation financière", points: 38 },
-  { id: "fallback-11", label: "Mort d'un ami proche", points: 37 },
-  { id: "fallback-12", label: "Déménagement", points: 20 },
-];
 
 const resultFallbacks = {
   faible: {
@@ -78,7 +67,7 @@ export async function GET(request: NextRequest) {
             label: event.description,
             points: event.points,
           }))
-        : fallbackItems,
+        : mobileFallbackDiagnosticItems,
     resultMessages: {
       faible: {
         label:
@@ -120,37 +109,42 @@ export async function POST(request: NextRequest) {
     selectedEventIds?: unknown;
   } | null;
 
-  const rawSelectedIds = Array.isArray(body?.selectedEventIds)
-    ? body.selectedEventIds.filter((id): id is string => typeof id === "string")
-    : [];
+  if (!body || !Array.isArray(body.selectedEventIds)) {
+    return jsonResponse(
+      request,
+      { error: "La liste des événements sélectionnés est invalide." },
+      { status: 400 },
+    );
+  }
+
+  const selectedEventIds = body.selectedEventIds;
+  const requestedEventIds = getDatabaseDiagnosticEventIds(selectedEventIds);
 
   const activeEvents =
-    rawSelectedIds.length > 0
+    requestedEventIds.length > 0
       ? await db.evenementStress.findMany({
-          where: { id: { in: rawSelectedIds }, isActif: true },
+          where: { id: { in: requestedEventIds }, isActif: true },
           select: { id: true, points: true },
         })
       : [];
 
-  const fallbackScore = Number(body?.score ?? 0);
-  const score =
-    activeEvents.length > 0
-      ? activeEvents.reduce((sum, event) => sum + event.points, 0)
-      : fallbackScore;
-
-  if (!Number.isFinite(score) || score < 0) {
-    return jsonResponse(request, { error: "Score invalide." }, { status: 400 });
-  }
+  const diagnostic = resolveDiagnostic(
+    selectedEventIds,
+    activeEvents,
+    mobileFallbackDiagnosticItems,
+  );
 
   const result = await db.resultatDiagnostic.create({
     data: {
-      scoreTotal: score,
-      niveauStress: determineStressLevel(score),
+      scoreTotal: diagnostic.scoreTotal,
+      niveauStress: diagnostic.niveauStress,
       utilisateurId: session.user.id,
       reponses:
-        activeEvents.length > 0
+        diagnostic.responseEventIds.length > 0
           ? {
-              create: activeEvents.map((event) => ({ evenementId: event.id })),
+              create: diagnostic.responseEventIds.map((eventId) => ({
+                evenementId: eventId,
+              })),
             }
           : undefined,
     },

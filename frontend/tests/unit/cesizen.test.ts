@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vitest";
 
 import {
   buildRgpdAnonymizedUserData,
@@ -86,6 +86,7 @@ void describe("CESIZen domain rules", () => {
       firstName: "Compte",
       lastName: "Supprime",
       age: null,
+      role: "USER",
       isActif: false,
       dateConsentement: null,
     });

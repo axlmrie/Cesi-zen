@@ -4,6 +4,9 @@ import { auth } from "@/server/better-auth/config";
 import { db } from "@/server/db";
 import { NavbarPrivate } from "@/components/NavbarPrivate";
 
+// Authentication and user data are runtime-only concerns.
+export const dynamic = "force-dynamic";
+
 export default async function ProtectedLayout({
   children,
 }: {

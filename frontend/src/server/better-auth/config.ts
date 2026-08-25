@@ -3,23 +3,17 @@ import { expo } from "@better-auth/expo";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { db } from "@/server/db";
-
-const appBaseURL = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
-const mobileHost = process.env.MOBILE_DEV_HOST ?? "172.20.10.2";
+import {
+  betterAuthBaseURL,
+  betterAuthTrustedOrigins,
+} from "@/server/mobile-origins";
 
 export const auth = betterAuth({
-  baseURL: appBaseURL,
+  baseURL: betterAuthBaseURL,
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),
-  trustedOrigins: [
-    "appli://",
-    "exp://",
-    "http://localhost:3000",
-    "http://localhost:8081",
-    `http://${mobileHost}:3000`,
-    `http://${mobileHost}:8081`,
-  ],
+  trustedOrigins: betterAuthTrustedOrigins,
   emailAndPassword: {
     enabled: true,
   },

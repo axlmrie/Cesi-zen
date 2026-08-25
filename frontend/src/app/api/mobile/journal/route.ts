@@ -63,7 +63,11 @@ export async function POST(request: NextRequest) {
   });
 
   if (!emotion) {
-    return jsonResponse(request, { error: "Émotion inconnue." }, { status: 404 });
+    return jsonResponse(
+      request,
+      { error: "Émotion inconnue." },
+      { status: 404 },
+    );
   }
 
   const entry = await db.journalEmotion.create({

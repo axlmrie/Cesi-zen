@@ -4,6 +4,7 @@ import { auth } from "@/server/better-auth/config"; // Ajuste le chemin
 import { headers } from "next/headers";
 import { db } from "@/server/db"; // Ajuste le chemin vers Prisma
 import { getErrorMessage, validateProfileUpdate } from "@/lib/cesizen";
+import { deleteAndAnonymizeUserAccount } from "@/server/rgpd";
 
 // 1. Mise à jour des informations
 export async function updateUserProfile(data: {
@@ -51,14 +52,13 @@ export async function softDeleteAccount() {
   }
 
   try {
-    // On passe le compte en "inactif" pour respecter le schéma (Soft-delete)
-    await db.user.update({
-      where: { id: session.user.id },
-      data: { isActif: false },
-    });
+    await deleteAndAnonymizeUserAccount(session.user.id);
     return { success: true };
-  } catch {
-    return { success: false, error: "Impossible de supprimer le compte." };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error, "Impossible de supprimer le compte."),
+    };
   }
 }
 // Ajoute ceci à ton fichier actions.ts existant
@@ -122,20 +122,12 @@ export async function deleteUserAccount() {
   }
 
   try {
-    await db.user.update({
-      where: { id: session.user.id },
-      data: {
-        isActif: false, // On désactive l'accès
-        email: `deleted-${session.user.id}@cesizen.fr`, // Anonymisation de l'email
-        name: "Utilisateur Supprimé",
-        firstName: "Supprimé",
-        lastName: "Supprimé",
-      },
-    });
-
-    // Optionnel : On pourrait aussi supprimer les sessions ici via Better Auth
+    await deleteAndAnonymizeUserAccount(session.user.id);
     return { success: true };
-  } catch {
-    return { success: false, error: "Erreur lors de la suppression." };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error, "Erreur lors de la suppression."),
+    };
   }
 }

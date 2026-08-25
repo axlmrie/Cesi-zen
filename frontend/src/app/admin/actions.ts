@@ -6,8 +6,13 @@ import { hashPassword } from "better-auth/crypto";
 import { revalidatePath } from "next/cache";
 
 import { createSlug } from "@/lib/cesizen";
+import {
+  assertUserCanLoseActiveAdminAccess,
+  runSerializableTransaction,
+} from "@/server/active-admin";
 import { requireAdminAction } from "@/server/admin";
 import { db } from "@/server/db";
+import { deleteAndAnonymizeUserAccount } from "@/server/rgpd";
 
 type UserRole = "USER" | "ADMIN";
 
@@ -55,29 +60,6 @@ async function ensureTargetIsNotCurrentAdmin(targetUserId: string) {
   }
 
   return admin;
-}
-
-async function ensureNotLastActiveAdmin(targetUserId: string) {
-  const target = await db.user.findUnique({
-    where: { id: targetUserId },
-    select: { role: true, isActif: true },
-  });
-
-  if (target?.role !== "ADMIN" || !target.isActif) {
-    return;
-  }
-
-  const otherAdmins = await db.user.count({
-    where: {
-      id: { not: targetUserId },
-      role: "ADMIN",
-      isActif: true,
-    },
-  });
-
-  if (otherAdmins === 0) {
-    throw new Error("Impossible de retirer le dernier administrateur actif.");
-  }
 }
 
 export async function createManagedUser(formData: FormData) {
@@ -144,15 +126,20 @@ export async function updateManagedUserRole(formData: FormData) {
 
   if (role !== "ADMIN") {
     await ensureTargetIsNotCurrentAdmin(userId);
-    await ensureNotLastActiveAdmin(userId);
+    await runSerializableTransaction(async (transaction) => {
+      await assertUserCanLoseActiveAdminAccess(transaction, userId);
+      await transaction.user.update({
+        where: { id: userId },
+        data: { role },
+      });
+    });
   } else {
     await requireAdminAction();
+    await db.user.update({
+      where: { id: userId },
+      data: { role },
+    });
   }
-
-  await db.user.update({
-    where: { id: userId },
-    data: { role },
-  });
 
   revalidatePath("/admin");
   revalidatePath("/admin/utilisateurs");
@@ -168,18 +155,20 @@ export async function toggleManagedUserStatus(formData: FormData) {
 
   if (!isActif) {
     await ensureTargetIsNotCurrentAdmin(userId);
-    await ensureNotLastActiveAdmin(userId);
+    await runSerializableTransaction(async (transaction) => {
+      await assertUserCanLoseActiveAdminAccess(transaction, userId);
+      await transaction.user.update({
+        where: { id: userId },
+        data: { isActif },
+      });
+      await transaction.session.deleteMany({ where: { userId } });
+    });
   } else {
     await requireAdminAction();
-  }
-
-  await db.user.update({
-    where: { id: userId },
-    data: { isActif },
-  });
-
-  if (!isActif) {
-    await db.session.deleteMany({ where: { userId } });
+    await db.user.update({
+      where: { id: userId },
+      data: { isActif },
+    });
   }
 
   revalidatePath("/admin");
@@ -194,22 +183,7 @@ export async function anonymizeManagedUser(formData: FormData) {
   }
 
   await ensureTargetIsNotCurrentAdmin(userId);
-  await ensureNotLastActiveAdmin(userId);
-
-  await db.session.deleteMany({ where: { userId } });
-  await db.user.update({
-    where: { id: userId },
-    data: {
-      name: "Compte supprime",
-      email: `deleted-${userId}@cesizen.local`,
-      image: null,
-      firstName: "Compte",
-      lastName: "Supprime",
-      age: null,
-      role: "USER",
-      isActif: false,
-    },
-  });
+  await deleteAndAnonymizeUserAccount(userId);
 
   revalidatePath("/admin");
   revalidatePath("/admin/utilisateurs");

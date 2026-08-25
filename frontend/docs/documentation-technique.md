@@ -23,7 +23,7 @@ Architecture full-stack Next.js avec App Router :
 - Backend via Server Components, Server Actions et routes API Better Auth.
 - Base PostgreSQL pilotee par Prisma.
 - Authentification Better Auth avec adaptateur Prisma.
-- Tests unitaires automatises via `node:test` execute par `tsx`.
+- Tests unitaires et tests de securite des frontieres serveur via Vitest.
 
 ## Comparatif des solutions envisagees
 
@@ -53,7 +53,13 @@ pnpm install
 cp .env.example .env
 ```
 
-Configurer `DATABASE_URL` dans `.env`, puis demarrer PostgreSQL :
+Configurer `DATABASE_URL`, `BETTER_AUTH_SECRET` et `BETTER_AUTH_URL` dans
+`.env`. Pour une application web mobile servie depuis un autre domaine,
+ajouter ses origines dans `MOBILE_ALLOWED_ORIGINS` (liste separee par des
+virgules). `MOBILE_DEV_HOST` permet facultativement d'autoriser l'adresse LAN
+utilisee par Expo en developpement.
+
+Demarrer ensuite PostgreSQL :
 
 ```bash
 docker compose up -d
@@ -73,7 +79,8 @@ Verification qualite :
 pnpm check
 ```
 
-Cette commande execute le lint, le typecheck TypeScript et les tests unitaires automatises.
+Cette commande execute le lint, le controle Prettier, le typecheck TypeScript
+et les tests unitaires automatises.
 
 ## Securite et qualite
 

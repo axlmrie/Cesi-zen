@@ -16,15 +16,17 @@ La recette valide que la livraison CESIZen correspond aux exigences du Bloc 2 : 
 
 1. Installer l'application avec le guide de `docs/documentation-technique.md`.
 2. Initialiser la base et les donnees de test.
-3. Executer `pnpm check`.
-4. Jouer les tests fonctionnels du cahier de tests.
-5. Noter chaque resultat : conforme, conforme avec reserve, non conforme.
-6. Prioriser les anomalies bloquantes avant livraison.
-7. Signer le PV de recette.
+3. Dans `frontend`, executer `pnpm check`.
+4. Dans `appli`, executer `pnpm check`.
+5. Jouer les tests fonctionnels du cahier de tests.
+6. Noter chaque resultat : conforme, conforme avec reserve, non conforme.
+7. Prioriser les anomalies bloquantes avant livraison.
+8. Signer le PV de recette.
 
 ## Criteres d'acceptation
 
-- `pnpm check` passe.
+- Le controle `pnpm check` du frontend passe.
+- Les tests Jest, le typecheck et le lint de l'application mobile passent.
 - Les comptes utilisateur/admin peuvent etre crees, modifies, desactives et anonymises.
 - Les pages et menus d'information sont administrables et visibles cote public.
 - Le diagnostic fonctionne pour un visiteur anonyme et peut etre sauvegarde par un utilisateur connecte.
