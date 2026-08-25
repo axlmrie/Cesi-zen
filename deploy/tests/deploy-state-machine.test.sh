@@ -122,7 +122,7 @@ test_success_order() {
   run_deploy "${sandbox}" none true "${TARGET_IMAGE}" || status=1
   assert_event 'route-active:maintenance' "${events}" || status=1
   assert_event 'migration' "${events}" || status=1
-  assert_event 'compose:run --rm cesizen-web npx prisma migrate deploy' "${events}" || status=1
+  assert_event 'compose:run --rm cesizen-web prisma migrate deploy' "${events}" || status=1
   assert_event "migration-image:${TARGET_IMAGE}" "${events}" || status=1
   assert_event "app-up:${TARGET_IMAGE}" "${events}" || status=1
   assert_event_matching "http-health:cesizen-web:${TARGET_IMAGE}" "${events}" || status=1

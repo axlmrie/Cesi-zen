@@ -123,7 +123,7 @@ main() {
   CESIZEN_IMAGE="${TARGET_IMAGE}" compose run \
     --rm \
     cesizen-web \
-    npx prisma migrate deploy
+    prisma migrate deploy
 
   APP_REPLACEMENT_STARTED=true
   CESIZEN_IMAGE="${TARGET_IMAGE}" compose up \
