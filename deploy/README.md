@@ -156,6 +156,12 @@ afficher :
 - un `BETTER_AUTH_SECRET` d'au moins 32 caractères ;
 - un `BETTER_AUTH_URL` public en HTTPS.
 
+Pour le déploiement automatisé des migrations, le rôle PostgreSQL de `DATABASE_URL`
+doit également disposer des droits DDL strictement nécessaires aux migrations validées
+(`CREATE`, `ALTER`, `DROP`, etc.). `prisma migrate deploy` ne requiert pas de shadow
+database en production. Vérifier ces droits avant l'activation sans afficher l'URL
+dans les journaux.
+
 Définir chacune de ces trois variables une seule fois. Leurs valeurs doivent être
 littérales : les substitutions Compose de type `${VARIABLE}` ne sont volontairement
 pas acceptées, afin que la valeur contrôlée soit exactement celle injectée au
@@ -170,12 +176,13 @@ Aucun jeton de registre ne doit être enregistré durablement dans ce dossier.
 ## 4. Premier déploiement
 
 `scripts/deploy.sh` vérifie la maintenance externe, l'active, télécharge l'image,
-attend le healthcheck HTTP 200 de `cesizen-web` sur `/api/health`, puis remet la route
-de production :
+applique les migrations, remplace l'application, attend une réponse HTTP 200 de
+`cesizen-web` sur `/api/health`, puis remet la route de production :
 
 ```bash
 cd /opt/cesizen/deploy
-./scripts/deploy.sh
+./scripts/deploy.sh \
+  'ghcr.io/organisation/cesizen@sha256:<DIGEST_64_HEXA>'
 ```
 
 Au premier déploiement, aucune image de rollback n'existe. Si la nouvelle application
@@ -183,9 +190,110 @@ n'est pas saine, la page de maintenance reste donc active jusqu'à correction.
 Le conteneur externe de maintenance reste démarré après une réussite ; seule la route
 du proxy change.
 
-Le script n'exécute volontairement aucune migration destructive. Les migrations
-Prisma nécessaires doivent être sauvegardées, testées et exécutées dans une étape CI
-ou d'exploitation dédiée avant la remise en production.
+### 4.1. Migrations Prisma et baseline initiale
+
+Le déploiement exécute les migrations présentes dans l'image cible avant de remplacer
+`cesizen-web`. L'image runtime contient la version verrouillée de la CLI Prisma, le
+schéma et tout le dossier `/app/prisma/migrations`. Depuis `/app`, le script exécute :
+
+```bash
+npx prisma migrate deploy
+```
+
+Elle s'exécute dans un conteneur Compose ponctuel construit à partir de la même
+référence GHCR immuable que l'application. Compose lui injecte `.env.production` et le
+connecte à `cesizen-backend`. Aucune migration n'est exécutée par le runner lui-même
+et la base n'est jamais exposée à GitHub. Un lien local dans `node_modules/.bin` et le
+mode npm hors ligne garantissent que `npx` utilise la CLI déjà installée dans l'image,
+sans télécharger de paquet au moment du déploiement. Prisma découvre alors
+`/app/prisma/schema.prisma` et son historique automatiquement.
+
+PostgreSQL doit être joignable depuis `cesizen-backend`. Si la base se trouve sur un
+autre réseau Docker, ce réseau doit être déclaré dans le Compose avant le premier
+déploiement. Le rôle de `DATABASE_URL` doit posséder les droits DDL requis.
+
+L'ordre appliqué est le suivant :
+
+1. valider l'environnement, acquérir `.deploy.lock` et conserver l'image applicative
+   précédente pour un éventuel rollback ;
+2. activer la maintenance, puis télécharger l'image cible ;
+3. exécuter `prisma migrate deploy` avec **l'image cible**, avant de remplacer
+   `cesizen-web` ;
+4. seulement après une migration réussie, recréer l'application, attendre une réponse
+   HTTP 200 sur `/api/health`, puis remettre la route de production.
+
+Un rollback automatique restaure uniquement l'image applicative : il ne doit jamais
+tenter d'annuler automatiquement une migration SQL déjà réussie. Prisma ne génère pas
+automatiquement de migration descendante pour ce cas. Chaque migration de production
+doit donc rester compatible avec l'ancienne version de l'application selon une
+stratégie _expand/contract_ : ajouter d'abord les nouvelles structures, migrer les
+données et le code, puis supprimer les anciennes structures dans une release
+ultérieure. Tester aussi la restauration d'une sauvegarde PostgreSQL avant toute
+migration importante.
+
+Si une migration ou la nouvelle application échoue, le script tente de restaurer
+l'image applicative précédente et ne réactive la production que si son endpoint HTTP
+répond. Cette restauration **n'annule aucune modification de la base**. En l'absence
+d'une ancienne image saine, la maintenance reste active et le job échoue. Comme
+`/api/health` teste désormais la connexion par une requête minimale, le script ne
+réexpose pas une ancienne version incapable d'utiliser la base. Ce contrôle ne prouve
+toutefois pas la compatibilité de l'ensemble du schéma : les migrations
+_expand/contract_ restent indispensables.
+
+Après un échec de migration, ne pas effacer ou modifier directement la table
+`_prisma_migrations`. Diagnostiquer l'état de la base, corriger ou terminer le SQL si
+nécessaire, puis utiliser explicitement `prisma migrate resolve --rolled-back ...` ou
+`--applied ...` selon la procédure de récupération validée.
+
+#### Baseline unique d'une base existante
+
+Le dépôt contient une migration initiale `frontend/prisma/migrations/0_init`. Toute
+base de production existante qui possède déjà ces tables doit être baselinée **avant
+le premier déploiement automatisé**. Sinon Prisma tentera d'appliquer `0_init` et
+échouera sur les objets existants. Cette opération reste manuelle et ne doit jamais
+être automatisée dans `deploy.sh` :
+
+1. sauvegarder PostgreSQL et tester la restauration sur une copie isolée ;
+2. vérifier que `prisma/schema.prisma` décrit exactement la base existante, de
+   préférence en comparant avec une copie de production ;
+3. relire et faire valider le SQL versionné dans
+   `prisma/migrations/0_init/migration.sql` ;
+4. sur **chaque base existante seulement**, depuis `frontend/` et avec la bonne
+   `DATABASE_URL`, marquer cette baseline comme déjà appliquée sans exécuter son SQL :
+
+   ```bash
+   pnpm exec prisma migrate resolve \
+     --applied 0_init \
+     --schema prisma/schema.prisma
+   pnpm exec prisma migrate status --schema prisma/schema.prisma
+   ```
+
+5. conserver la sortie de `migrate status` et tester ensuite un déploiement sur une
+   copie de production.
+
+Une nouvelle base vide appliquera normalement `0_init` via `migrate deploy`. Ne jamais
+exécuter manuellement `0_init/migration.sql` sur une base existante déjà baselinée, et
+ne jamais modifier une migration déjà appliquée : créer une nouvelle migration avec
+`prisma migrate dev --name <description>` depuis une base de développement.
+
+Le job `deploy` dispose déjà de `packages: read` et n'a besoin d'aucune permission
+GitHub supplémentaire : les identifiants de base restent dans `.env.production` sur
+le serveur. Sa limite actuelle de 20 minutes inclut la migration et devra être ajustée
+si sa durée maximale testée l'exige ; `DEPLOY_HEALTH_TIMEOUT` ne couvre que le
+démarrage de l'application.
+
+La CI exécute `prisma validate`, vérifie la présence de `0_init`, puis applique tout
+l'historique sur un service PostgreSQL 16 vierge. Elle contrôle ensuite
+`prisma migrate status` et relance `migrate deploy` pour vérifier qu'aucune migration
+ne reste en attente. Les scénarios de `deploy/tests/` sont également exécutés et le
+build de l'image confirme que la CLI verrouillée est résoluble hors ligne.
+
+Références Prisma officielles :
+
+- [baseliner une base existante](https://docs.prisma.io/docs/orm/v6/prisma-migrate/workflows/baselining) ;
+- [déployer les migrations en production](https://docs.prisma.io/docs/orm/prisma-client/deployment/deploy-database-changes-with-prisma-migrate) ;
+- [commande `migrate deploy`](https://www.prisma.io/docs/cli/migrate/deploy) ;
+- [stratégie de migration de données _expand/contract_](https://docs.prisma.io/docs/guides/database/data-migration).
 
 ## 5. Déploiements CI/CD
 
@@ -193,8 +301,9 @@ Le job de déploiement s'exécute directement sur le runner portant les labels
 `self-hosted` et `prod`. Il ne nécessite ni SSH, ni SCP, ni secret de connexion au
 serveur.
 
-Le premier argument de `scripts/deploy.sh` est prioritaire sur `.env.deploy`. Le
-workflow lui transmet la référence GHCR immuable produite par le build :
+`scripts/deploy.sh` exige comme unique argument un digest GHCR immuable en minuscules ;
+un tag mutable ou l'absence d'argument est refusé avant toute modification. Le workflow
+lui transmet la référence produite par le build :
 
 ```bash
 cd /opt/cesizen/deploy
@@ -233,6 +342,15 @@ Une seule opération peut s'exécuter à la fois grâce à `.deploy.lock`. En ca
 
 Même après un rollback réussi, `scripts/deploy.sh` termine en erreur : la production
 est rétablie, mais la livraison demandée a échoué et doit rester visible dans la CI.
+
+Après un déploiement réussi, le script exécute `docker image prune --all --force`.
+Cette commande est globale au daemon Docker : elle supprime toutes les images qui ne
+sont référencées par aucun conteneur, y compris celles d'autres projets, et pas
+uniquement les anciennes images CesiZen. Elle ne supprime ni conteneur ni volume, mais
+peut imposer de nouveaux téléchargements et élimine l'ancien cache de rollback local.
+Réserver ce comportement à un hôte Docker dédié ; sur un serveur partagé, remplacer
+ce nettoyage par une politique explicitement limitée aux images CesiZen avant la mise
+en service.
 
 ## 6. Configurer GitHub
 

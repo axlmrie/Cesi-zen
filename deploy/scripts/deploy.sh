@@ -10,6 +10,7 @@ MAINTENANCE_ACTIVE=false
 APP_REPLACEMENT_STARTED=false
 NEW_VERSION_HEALTHY=false
 PREVIOUS_CONTAINER_PRESENT=false
+MIGRATION_STEP_STARTED=false
 ROLLBACK_IMAGE=""
 TARGET_IMAGE=""
 
@@ -21,6 +22,10 @@ deployment_failed() {
   set +e
 
   warn "Deployment failed at line ${failed_line}; starting recovery."
+
+  if [[ "${MIGRATION_STEP_STARTED}" == true ]]; then
+    warn "Database migrations are not rolled back automatically. Verify Prisma migration status and schema compatibility before the next deployment."
+  fi
 
   if [[ "${MAINTENANCE_ACTIVE}" != true ]]; then
     if [[ -n "${ROLLBACK_IMAGE}" ]]; then
@@ -35,7 +40,8 @@ deployment_failed() {
     exit "${exit_status}"
   fi
 
-  if [[ "${APP_REPLACEMENT_STARTED}" == true ]]; then
+  if [[ "${APP_REPLACEMENT_STARTED}" == true || \
+    "${MIGRATION_STEP_STARTED}" == true ]]; then
     if [[ -z "${ROLLBACK_IMAGE}" ]]; then
       warn "No previous image exists for rollback. Maintenance remains active."
       exit "${exit_status}"
@@ -47,7 +53,7 @@ deployment_failed() {
       --no-deps \
       --force-recreate \
       cesizen-web && \
-      wait_for_container_health \
+      wait_for_application_http \
         cesizen-web \
         "${DEPLOY_HEALTH_TIMEOUT}" \
         "${DEPLOY_HEALTH_INTERVAL}" && \
@@ -84,14 +90,14 @@ trap 'deployment_failed 143 "${LINENO}"' TERM
 main() {
   local previous_image_id deployment_id
 
-  [[ $# -le 1 ]] || die "Usage: $0 [ghcr.io/owner/image:tag-or-digest]"
-  if [[ $# -eq 1 ]]; then
-    CESIZEN_IMAGE="$1"
-    export CESIZEN_IMAGE
-  fi
+  [[ $# -eq 1 ]] || die "Usage: $0 ghcr.io/owner/image@sha256:digest"
+  CESIZEN_IMAGE="$1"
+  export CESIZEN_IMAGE
 
   initialize_deploy_context
   TARGET_IMAGE="${CESIZEN_IMAGE}"
+  [[ "${TARGET_IMAGE}" =~ ^ghcr[.]io/[a-z0-9._/-]+@sha256:[a-f0-9]{64}$ ]] || \
+    die "The deployment image must be an immutable lowercase GHCR sha256 digest."
 
   if docker container inspect cesizen-web >/dev/null 2>&1; then
     PREVIOUS_CONTAINER_PRESENT=true
@@ -110,7 +116,14 @@ main() {
   MAINTENANCE_ACTIVE=true
 
   log "Pulling ${TARGET_IMAGE}."
-  docker pull "${TARGET_IMAGE}"
+  CESIZEN_IMAGE="${TARGET_IMAGE}" compose pull cesizen-web
+
+  log "Applying pending Prisma migrations with ${TARGET_IMAGE}."
+  MIGRATION_STEP_STARTED=true
+  CESIZEN_IMAGE="${TARGET_IMAGE}" compose run \
+    --rm \
+    cesizen-web \
+    npx prisma migrate deploy
 
   APP_REPLACEMENT_STARTED=true
   CESIZEN_IMAGE="${TARGET_IMAGE}" compose up \
@@ -119,7 +132,7 @@ main() {
     --force-recreate \
     cesizen-web
 
-  wait_for_container_health \
+  wait_for_application_http \
     cesizen-web \
     "${DEPLOY_HEALTH_TIMEOUT}" \
     "${DEPLOY_HEALTH_INTERVAL}"
@@ -132,6 +145,10 @@ main() {
     docker image rm "${ROLLBACK_IMAGE}" >/dev/null 2>&1 || \
       warn "Temporary rollback tag ${ROLLBACK_IMAGE} could not be removed."
   fi
+
+  log "Removing unused Docker images."
+  docker image prune --all --force || \
+    warn "Unused Docker images could not be pruned; deployment remains successful."
 
   log "Deployment succeeded with ${TARGET_IMAGE}."
 }

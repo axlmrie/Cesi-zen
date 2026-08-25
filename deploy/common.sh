@@ -399,6 +399,35 @@ wait_for_container_health() {
   return 1
 }
 
+wait_for_application_http() {
+  local container_name="$1"
+  local timeout_seconds="$2"
+  local interval_seconds="$3"
+  local max_attempts request_timeout_ms attempt
+
+  max_attempts=$(((timeout_seconds + interval_seconds - 1) / interval_seconds))
+  request_timeout_ms=$((interval_seconds * 1000))
+  if ((request_timeout_ms > 5000)); then
+    request_timeout_ms=5000
+  fi
+
+  for ((attempt = 1; attempt <= max_attempts; attempt++)); do
+    if docker exec "${container_name}" node -e \
+      "fetch('http://127.0.0.1:3000/api/health', { redirect: 'manual', signal: AbortSignal.timeout(${request_timeout_ms}) }).then((response) => process.exit(response.status === 200 ? 0 : 1)).catch(() => process.exit(1))"; then
+      log "${container_name} returned HTTP 200 on /api/health (attempt ${attempt}/${max_attempts})."
+      return 0
+    fi
+
+    if ((attempt < max_attempts)); then
+      sleep "${interval_seconds}"
+    fi
+  done
+
+  warn "${container_name} did not return HTTP 200 on /api/health after ${max_attempts} attempts."
+  docker logs --tail 80 "${container_name}" >&2 2>/dev/null || true
+  return 1
+}
+
 network_has_container() {
   local network_name="$1"
   local container_name="$2"

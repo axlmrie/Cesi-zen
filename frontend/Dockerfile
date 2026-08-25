@@ -20,6 +20,14 @@ COPY prisma ./prisma
 
 RUN pnpm install --frozen-lockfile
 
+FROM dependencies AS prisma-cli
+
+# Install the exact CLI version resolved by pnpm so runtime migrations never
+# download an unpinned package through npx.
+RUN PRISMA_VERSION="$(node --print "require('./node_modules/prisma/package.json').version")" \
+  && npm install --global --omit=dev "prisma@${PRISMA_VERSION}" \
+  && npm cache clean --force
+
 FROM base AS builder
 
 ENV NEXT_TELEMETRY_DISABLED="1"
@@ -46,6 +54,10 @@ ENV NEXT_TELEMETRY_DISABLED="1"
 ENV HOSTNAME="0.0.0.0"
 ENV PORT="3000"
 ENV APP_VERSION="$APP_VERSION"
+ENV HOME="/home/nextjs"
+ENV PATH="/app/node_modules/.bin:${PATH}"
+ENV NPM_CONFIG_OFFLINE="true"
+ENV NPM_CONFIG_UPDATE_NOTIFIER="false"
 
 WORKDIR /app
 
@@ -53,15 +65,29 @@ RUN apt-get update \
   && apt-get install --yes --no-install-recommends ca-certificates openssl \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --system --gid 1001 nodejs \
-  && useradd --system --uid 1001 --gid nodejs nextjs
+  && useradd --system --uid 1001 --gid nodejs --create-home \
+    --home-dir /home/nextjs nextjs
 
+COPY --from=prisma-cli /usr/local/lib/node_modules/prisma /usr/local/lib/node_modules/prisma
+COPY --from=prisma-cli /usr/local/bin/prisma /usr/local/bin/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Keep the custom Prisma output available even if Next's file tracing changes.
 COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
+# `prisma migrate deploy` discovers schema.prisma and future migrations here.
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+RUN mkdir -p /app/node_modules/.bin \
+  && ln --symbolic --force /usr/local/bin/prisma /app/node_modules/.bin/prisma \
+  && chown nextjs:nodejs /app/node_modules/.bin \
+  && chown --no-dereference nextjs:nodejs /app/node_modules/.bin/prisma
 
 USER nextjs
+
+# This build-time assertion proves that the imposed deployment command resolves
+# the bundled CLI as the non-root runtime user without registry access.
+RUN npx prisma --version
 
 EXPOSE 3000
 

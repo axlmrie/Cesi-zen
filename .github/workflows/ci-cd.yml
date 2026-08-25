@@ -31,6 +31,20 @@ jobs:
     name: CI frontend
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: cesizen_ci
+          POSTGRES_PASSWORD: cesizen_ci
+          POSTGRES_DB: cesizen_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cesizen_ci -d cesizen_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     steps:
       - name: Recuperer le depot
@@ -74,6 +88,21 @@ jobs:
 
       - name: Bloquer les dependances frontend critiques
         run: pnpm --dir frontend audit --prod --audit-level=critical
+
+      - name: Valider le schema et l'historique Prisma
+        env:
+          DATABASE_URL: postgresql://cesizen_ci:cesizen_ci@127.0.0.1:5432/cesizen_ci
+        run: |
+          pnpm --dir frontend exec prisma validate
+          test -s frontend/prisma/migrations/0_init/migration.sql
+
+      - name: Tester les migrations sur PostgreSQL
+        env:
+          DATABASE_URL: postgresql://cesizen_ci:cesizen_ci@127.0.0.1:5432/cesizen_ci
+        run: |
+          pnpm --dir frontend exec prisma migrate deploy
+          pnpm --dir frontend exec prisma migrate status
+          pnpm --dir frontend exec prisma migrate deploy
 
   mobile-ci:
     name: CI application mobile
@@ -145,12 +174,42 @@ jobs:
           format: table
           exit-code: "1"
 
+  deployment-ci:
+    name: Validation du deploiement
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verifier la syntaxe et les scenarios de deploiement
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n deploy/common.sh deploy/scripts/*.sh deploy/tests/*.sh
+          bash deploy/tests/deploy-state-machine.test.sh
+
+      - name: Valider Docker Compose
+        shell: bash
+        env:
+          CESIZEN_IMAGE: ghcr.io/example/cesizen@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          PRODUCTION_ENV_FILE: ${{ github.workspace }}/deploy/.env.production.example
+        run: |
+          set -euo pipefail
+          docker compose \
+            --project-directory deploy \
+            --env-file deploy/.env.deploy.example \
+            --file deploy/docker-compose.production.yml \
+            config --quiet
+
   release:
     name: Version et release GitHub
     needs:
       - frontend-ci
       - mobile-ci
       - source-security
+      - deployment-ci
     if: >-
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
