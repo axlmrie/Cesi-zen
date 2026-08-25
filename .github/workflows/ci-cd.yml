@@ -337,10 +337,12 @@ jobs:
       - build-image
       - image-security
       - promote-latest
-    runs-on: ubuntu-latest
+    # Ce runner dedie s'execute directement sur le serveur de production.
+    runs-on: [self-hosted, prod]
     timeout-minutes: 20
     permissions:
       contents: read
+      packages: read
     environment:
       name: production
     concurrency:
@@ -348,87 +350,92 @@ jobs:
       cancel-in-progress: false
     env:
       IMAGE_REF: ${{ needs.build-image.outputs.image_ref }}
-      SSH_HOST: ${{ vars.DEPLOY_SSH_HOST }}
-      SSH_PORT: ${{ vars.DEPLOY_SSH_PORT || '22' }}
-      SSH_USER: ${{ vars.DEPLOY_SSH_USER }}
-      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/cesizen/deploy' }}
 
     steps:
-      - name: Recuperer les scripts de deploiement
+      # Les fichiers .env restent hors du workspace nettoye par checkout.
+      - name: Recuperer les scripts sur le runner de production
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      # DEPLOY_SSH_KNOWN_HOSTS doit contenir la cle publique verifiee du serveur,
-      # au format known_hosts. On n'utilise volontairement pas ssh-keyscan en CI.
-      - name: Configurer et verifier SSH
+      - name: Verifier le runner et le repertoire persistant
         shell: bash
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
-
-          : "${SSH_HOST:?Variable DEPLOY_SSH_HOST absente}"
-          : "${SSH_USER:?Variable DEPLOY_SSH_USER absente}"
           : "${DEPLOY_PATH:?Variable DEPLOY_PATH absente}"
-          : "${SSH_PRIVATE_KEY:?Secret DEPLOY_SSH_PRIVATE_KEY absent}"
-          : "${SSH_KNOWN_HOSTS:?Secret DEPLOY_SSH_KNOWN_HOSTS absent}"
-
-          [[ "$SSH_HOST" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]]
-          [[ "$SSH_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]]
-          [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]]
-          ((10#$SSH_PORT >= 1 && 10#$SSH_PORT <= 65535))
           [[ "$DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]
           [[ "/$DEPLOY_PATH/" != *"/../"* ]]
           [[ "$IMAGE_REF" =~ ^ghcr[.]io/[a-z0-9._/-]+@sha256:[a-f0-9]{64}$ ]]
 
-          umask 077
-          install -d -m 700 "$HOME/.ssh"
-          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/deploy_key"
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/deploy_key" "$HOME/.ssh/known_hosts"
-          ssh-keygen -y -f "$HOME/.ssh/deploy_key" > /dev/null
+          for command_name in docker install realpath rsync; do
+            command -v "$command_name" > /dev/null
+          done
+          docker info > /dev/null
+          docker compose version > /dev/null
 
-          known_host_query="$SSH_HOST"
-          if [[ "$SSH_PORT" != "22" ]]; then
-            known_host_query="[$SSH_HOST]:$SSH_PORT"
-          fi
-          ssh-keygen -F "$known_host_query" -f "$HOME/.ssh/known_hosts" > /dev/null
+          resolved_deploy_path="$(realpath --canonicalize-missing "$DEPLOY_PATH")"
+          resolved_workspace="$(realpath "$GITHUB_WORKSPACE")"
+          [[ "$resolved_deploy_path" != "/" ]]
+          [[ "$resolved_deploy_path" != "$resolved_workspace" ]]
+          [[ "$resolved_deploy_path" != "$resolved_workspace/"* ]]
 
-      # Le flux tar transfere deploy/ sans dependre de rsync sur le serveur.
-      - name: Transferer la configuration de production
+          install -d -m 0750 "$resolved_deploy_path"
+          [[ -w "$resolved_deploy_path" ]]
+          [[ -f "$resolved_deploy_path/.env.deploy" ]]
+          [[ -f "$resolved_deploy_path/.env.production" ]]
+
+          echo "DEPLOY_PATH=$resolved_deploy_path" >> "$GITHUB_ENV"
+
+      # Les suppressions sont differees. Les regles protect/exclude conservent
+      # les secrets, le verrou et la route Nginx active sur le serveur.
+      - name: Synchroniser la configuration versionnee
         shell: bash
         run: |
           set -euo pipefail
-          ssh_options=(
-            -i "$HOME/.ssh/deploy_key"
-            -p "$SSH_PORT"
-            -o BatchMode=yes
-            -o IdentitiesOnly=yes
-            -o StrictHostKeyChecking=yes
-          )
+          rsync \
+            --archive \
+            --no-owner \
+            --no-group \
+            --no-perms \
+            --omit-dir-times \
+            --delete-delay \
+            --delay-updates \
+            --filter='protect /.env.deploy' \
+            --filter='exclude /.env.deploy' \
+            --filter='protect /.env.production' \
+            --filter='exclude /.env.production' \
+            --filter='protect /.deploy.lock' \
+            --filter='exclude /.deploy.lock' \
+            --filter='protect /nginx/runtime/*.conf' \
+            --filter='exclude /nginx/runtime/*.conf' \
+            deploy/ "$DEPLOY_PATH/"
 
-          ssh "${ssh_options[@]}" "$SSH_USER@$SSH_HOST" \
-            "mkdir -p '$DEPLOY_PATH'"
-          tar -C deploy -czf - . | ssh "${ssh_options[@]}" \
-            "$SSH_USER@$SSH_HOST" "tar -xzf - -C '$DEPLOY_PATH'"
+          chmod 0750 "$DEPLOY_PATH" "$DEPLOY_PATH"/scripts/*.sh
 
-      # deploy.sh recoit le digest en argument, gere la maintenance et
-      # garantit une remise en production ou un rollback avec ses traps.
-      - name: Mettre a jour le service
+      # Le token GHCR en lecture seule est isole du profil Docker persistant du
+      # runner et supprime apres le deploiement, y compris en cas d'echec.
+      - name: Mettre a jour le service local
         shell: bash
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_USERNAME: ${{ github.actor }}
         run: |
           set -euo pipefail
-          ssh_options=(
-            -i "$HOME/.ssh/deploy_key"
-            -p "$SSH_PORT"
-            -o BatchMode=yes
-            -o IdentitiesOnly=yes
-            -o StrictHostKeyChecking=yes
-          )
+          docker_config="$(mktemp -d)"
+          chmod 0700 "$docker_config"
+          export DOCKER_CONFIG="$docker_config"
 
-          ssh "${ssh_options[@]}" "$SSH_USER@$SSH_HOST" \
-            "cd '$DEPLOY_PATH' && chmod +x scripts/*.sh && ./scripts/deploy.sh '$IMAGE_REF'"
+          cleanup_docker_credentials() {
+            docker logout "$REGISTRY" > /dev/null 2>&1 || true
+            rm -f "$docker_config/config.json"
+            rmdir "$docker_config" 2>/dev/null || true
+          }
+          trap cleanup_docker_credentials EXIT
 
-      - name: Supprimer la cle SSH du runner
-        if: always()
-        run: rm -f "$HOME/.ssh/deploy_key"
+          printf '%s' "$GHCR_TOKEN" | docker login "$REGISTRY" \
+            --username "$GHCR_USERNAME" \
+            --password-stdin
+
+          cd "$DEPLOY_PATH"
+          ./scripts/deploy.sh "$IMAGE_REF"

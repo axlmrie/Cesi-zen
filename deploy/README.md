@@ -28,40 +28,52 @@ Nginx active sont ignorés par Git.
 
 ## 1. Préparer Ubuntu
 
-Installer Docker Engine et le plugin Docker Compose v2 depuis le dépôt officiel
-Docker, puis vérifier :
+Installer Docker Engine, le plugin Docker Compose v2 et `rsync`, puis vérifier :
 
 ```bash
+sudo apt-get update
+sudo apt-get install -y rsync
 docker --version
 docker compose version
 docker info
+rsync --version
 ```
 
 La procédure maintenue par Docker pour Ubuntu est disponible ici :
 <https://docs.docker.com/engine/install/ubuntu/>.
 
-Le compte de déploiement doit pouvoir utiliser Docker. Après son ajout éventuel au
-groupe `docker`, rouvrir sa session :
+Enregistrer sur ce serveur un runner GitHub Actions auto-hébergé dédié à la production,
+puis lui ajouter le label personnalisé `prod`. Installer le runner en dehors du
+répertoire de déploiement persistant.
+
+Le compte de service du runner doit pouvoir utiliser Docker. Après son ajout éventuel
+au groupe `docker`, redémarrer le service du runner :
 
 ```bash
-sudo usermod -aG docker "$USER"
+sudo usermod -aG docker <COMPTE_RUNNER>
 ```
 
-Attention : l'accès au groupe `docker` équivaut pratiquement à un accès root. Réserver
-ce compte à l'exploitation et protéger sa clé SSH.
+Attention : l'accès au groupe `docker` équivaut pratiquement à un accès root. Ce
+runner doit être réservé aux déploiements issus d'une branche protégée ; ne jamais y
+exécuter les jobs de Pull Requests non approuvées.
 
-Installer le dossier, sans y placer de secret dans Git :
+Préparer le répertoire persistant, qui ne doit pas être placé dans le dossier `_work`
+nettoyé par GitHub Actions :
 
 ```bash
-sudo install -d -o deploy -g deploy -m 0750 /opt/cesizen
-sudo -u deploy git clone <URL_DU_DEPOT> /opt/cesizen/source
-cd /opt/cesizen/source/deploy
-chmod 0750 scripts/deploy.sh scripts/maintenance-on.sh scripts/maintenance-off.sh
-chmod 0640 common.sh
+RUNNER_USER=github-runner
+DEPLOY_SOURCE=/chemin/vers/Cesi-zen/deploy
+
+sudo install -d -o "$RUNNER_USER" -g "$RUNNER_USER" -m 0750 /opt/cesizen/deploy
+sudo -u "$RUNNER_USER" install -m 0640 \
+  "$DEPLOY_SOURCE/.env.deploy.example" /opt/cesizen/deploy/.env.deploy
+sudo -u "$RUNNER_USER" install -m 0600 \
+  "$DEPLOY_SOURCE/.env.production.example" /opt/cesizen/deploy/.env.production
 ```
 
-Le script utilise aussi les utilitaires Ubuntu standards `flock`, `install`, `mktemp`,
-`sed` et `stat` (paquets `util-linux`, `coreutils` et `sed`).
+Configurer ensuite ces deux fichiers comme décrit plus bas. Le job refuse de démarrer
+s'ils sont absents. Les scripts utilisent aussi `flock`, `install`, `mktemp`,
+`realpath`, `sed` et `stat`, fournis par les paquets Ubuntu standards.
 
 ## 2. Préparer le réseau Nginx Proxy Manager
 
@@ -120,9 +132,7 @@ Ne configurer ni `cesizen-web:3000` ni une adresse IP de conteneur dans NPM.
 ## 3. Configurer les environnements
 
 ```bash
-cd /opt/cesizen/source/deploy
-cp .env.deploy.example .env.deploy
-cp .env.production.example .env.production
+cd /opt/cesizen/deploy
 chmod 0600 .env.production
 chmod 0640 .env.deploy
 ```
@@ -154,13 +164,8 @@ conteneur.
 Générer le secret, par exemple, avec `openssl rand -base64 48`. Ne jamais transmettre
 le contenu de `.env.production` dans les logs CI.
 
-Pour une image GHCR privée, connecter une fois le compte de déploiement avec un token
-limité à `read:packages` :
-
-```bash
-printf '%s' "$GHCR_READ_TOKEN" | docker login ghcr.io -u <COMPTE_GITHUB> --password-stdin
-unset GHCR_READ_TOKEN
-```
+L'authentification GHCR du pipeline est temporaire et décrite dans la section 5.
+Aucun jeton de registre ne doit être enregistré durablement dans ce dossier.
 
 ## 4. Premier déploiement
 
@@ -169,7 +174,7 @@ attend le healthcheck HTTP 200 de `cesizen-web` sur `/api/health`, puis remet la
 de production :
 
 ```bash
-cd /opt/cesizen/source/deploy
+cd /opt/cesizen/deploy
 ./scripts/deploy.sh
 ```
 
@@ -184,27 +189,39 @@ ou d'exploitation dédiée avant la remise en production.
 
 ## 5. Déploiements CI/CD
 
-Le premier argument de `scripts/deploy.sh` est prioritaire sur `.env.deploy`. Une
-étape CI distante peut ainsi déployer un digest immuable sans réécrire de fichier :
+Le job de déploiement s'exécute directement sur le runner portant les labels
+`self-hosted` et `prod`. Il ne nécessite ni SSH, ni SCP, ni secret de connexion au
+serveur.
+
+Le premier argument de `scripts/deploy.sh` est prioritaire sur `.env.deploy`. Le
+workflow lui transmet la référence GHCR immuable produite par le build :
 
 ```bash
-cd /opt/cesizen/source/deploy
+cd /opt/cesizen/deploy
 ./scripts/deploy.sh 'ghcr.io/organisation/cesizen@sha256:<DIGEST_64_HEXA>'
 ```
 
-Le workflow peut transférer le contenu versionné de `deploy/` vers le répertoire de
-déploiement, mais il ne doit jamais envoyer, supprimer ni remplacer `.env.deploy` ou
-`.env.production`. Avec `rsync --delete`, ajouter des règles `protect`/`exclude` pour
-ces deux fichiers avant toute mise en service du job. Aucun des scripts de ce dossier
-n'écrit dans ces deux fichiers.
+Le checkout GitHub reste dans le workspace éphémère du runner. Le workflow synchronise
+ensuite `deploy/` vers `DEPLOY_PATH` avec `rsync`. Les règles
+`protect` et `exclude` empêchent explicitement toute suppression ou modification de :
 
-Configurer aussi la concurrence du workflow pour sérialiser le transfert et
-`scripts/deploy.sh`. Le verrou interne sérialise les scripts, mais il ne peut pas
-protéger des fichiers qu'un second job remplacerait avant de lancer son propre script.
+- `.env.deploy` ;
+- `.env.production` ;
+- `.deploy.lock` ;
+- `nginx/runtime/*.conf`.
 
-L'authentification GHCR privée est un prérequis persistant du serveur : le workflow
-ne transmet pas le token à `deploy.sh`. Exécuter `docker login ghcr.io` une fois avec
-le compte de déploiement et renouveler le credential selon la politique de sécurité.
+Les deux fichiers d'environnement doivent donc être créés une fois par
+l'administrateur dans `DEPLOY_PATH`. Ils restent sur le serveur entre les jobs et ne
+sont jamais copiés dans le workspace GitHub Actions.
+
+Le job reçoit un `GITHUB_TOKEN` limité à `packages: read`. La connexion à GHCR
+utilise un `DOCKER_CONFIG` temporaire supprimé à la fin du job ; aucune authentification
+Docker persistante et aucun PAT ne sont nécessaires sur le serveur.
+
+La concurrence GitHub `cesizen-production` sérialise les jobs, et `.deploy.lock`
+sérialise les scripts d'exploitation. Éviter néanmoins une synchronisation manuelle
+du répertoire pendant qu'un job est en cours, car le verrou applicatif n'est acquis
+qu'au démarrage du script.
 
 Une seule opération peut s'exécuter à la fois grâce à `.deploy.lock`. En cas d'échec :
 
@@ -214,38 +231,39 @@ Une seule opération peut s'exécuter à la fois grâce à `.deploy.lock`. En ca
 4. si le rollback ou le rechargement Nginx échoue, la maintenance reste active et le
    script termine en erreur pour faire échouer le job CI.
 
-Même après un rollback réussi, `scripts/deploy.sh` termine en erreur : la production est
-rétablie, mais la livraison demandée a échoué et doit rester visible dans la CI.
+Même après un rollback réussi, `scripts/deploy.sh` termine en erreur : la production
+est rétablie, mais la livraison demandée a échoué et doit rester visible dans la CI.
 
 ## 6. Configurer GitHub
 
-Créer un environnement GitHub nommé `production`. Une règle d'approbation peut y être
-ajoutée pour imposer une validation humaine juste avant le déploiement SSH.
+Créer un environnement GitHub nommé `production`, limité à `main` ou `master`,
+avec une règle d'approbation humaine avant déploiement.
 
-La variable de dépôt facultative `DOCKER_PLATFORM` définit la plateforme du serveur
-(`linux/amd64` par défaut ; utiliser `linux/arm64` pour un serveur ARM64).
+Enregistrer le runner auto-hébergé au niveau approprié et lui attribuer le label
+`prod`. Le job exige simultanément les labels `self-hosted` et `prod`.
 
-Déclarer ensuite les variables suivantes dans l'environnement `production` :
+Variables disponibles :
 
-- `DEPLOY_SSH_HOST` : nom DNS ou adresse du serveur Ubuntu ;
-- `DEPLOY_SSH_PORT` : port SSH, facultatif (`22` par défaut) ;
-- `DEPLOY_SSH_USER` : compte de déploiement membre du groupe Docker ;
-- `DEPLOY_PATH` : dossier qui recevra le contenu de `deploy/`, par exemple
-  `/opt/cesizen/source/deploy` avec l'installation décrite plus haut.
+- variable de dépôt `DOCKER_PLATFORM`, facultative : plateforme de l'image
+  (`linux/amd64` par défaut, `linux/arm64` pour un serveur ARM64) ;
+- variable de l'environnement `production` `DEPLOY_PATH`, facultative :
+  répertoire persistant, `/opt/cesizen/deploy` par défaut.
 
-Déclarer aussi ces secrets dans le même environnement :
+Aucune variable ni aucun secret SSH ne sont nécessaires. Pour une image GHCR privée,
+accorder au dépôt Actions un accès en lecture au package ; le workflow utilise son
+`GITHUB_TOKEN` avec les seules permissions `contents: read` et `packages: read`
+dans le job de production.
 
-- `DEPLOY_SSH_PRIVATE_KEY` : clé privée dédiée, sans phrase secrète, dont la clé
-  publique est autorisée pour le compte de déploiement ;
-- `DEPLOY_SSH_KNOWN_HOSTS` : ligne `known_hosts` correspondant au serveur et au port
-  SSH. Récupérer cette clé depuis un poste de confiance et comparer son empreinte avec
-  celle affichée directement sur le serveur avant de l'enregistrer. Le workflow refuse
-  volontairement une clé hôte absente ou inconnue.
+Protéger `main` ou `master` en exigeant les jobs CI et les revues. Un runner
+auto-hébergé exécute les scripts présents dans le commit avec l'accès Docker du compte
+de service : limiter strictement les personnes pouvant modifier le workflow ou
+approuver l'environnement, dédier ce runner à la production et maintenir son système
+à jour.
 
-Protéger ensuite `main` (ou `master`) en exigeant les trois jobs CI. Les releases
-suivent les Conventional Commits : `fix:` produit un patch, `feat:` une version
-mineure, et `feat!:` ou un pied `BREAKING CHANGE:` une version majeure. Les commits
-comme `docs:` ou `chore:` ne publient pas de version avec la configuration actuelle.
+Les releases suivent les Conventional Commits : `fix:` produit un patch, `feat:`
+une version mineure, et `feat!:` ou un pied `BREAKING CHANGE:` une version majeure.
+Les commits comme `docs:` ou `chore:` ne publient pas de version avec la
+configuration actuelle.
 
 ## 7. Opérations manuelles
 
