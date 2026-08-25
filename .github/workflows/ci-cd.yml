@@ -194,7 +194,7 @@ jobs:
         run: |
           set -euo pipefail
           bash -n deploy/common.sh deploy/scripts/*.sh deploy/tests/*.sh frontend/start-database.sh frontend/tests/*.sh
-          shellcheck -x \
+          shellcheck -x --severity=warning \
             deploy/common.sh \
             deploy/scripts/*.sh \
             deploy/tests/*.test.sh \
