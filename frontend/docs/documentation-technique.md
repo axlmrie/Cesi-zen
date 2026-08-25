@@ -21,7 +21,7 @@ Architecture full-stack Next.js avec App Router :
 
 - Frontend React 19 et Tailwind CSS.
 - Backend via Server Components, Server Actions et routes API Better Auth.
-- Base PostgreSQL pilotee par Prisma.
+- Base MariaDB pilotee par le connecteur MySQL de Prisma.
 - Authentification Better Auth avec adaptateur Prisma.
 - Tests unitaires et tests de securite des frontieres serveur via Vitest.
 
@@ -44,7 +44,8 @@ Prerequis :
 
 - Node.js 20 ou plus.
 - pnpm 10.
-- Docker Desktop ou une base PostgreSQL accessible.
+- Docker Desktop ou MariaDB 10.0+ accessible (le developpement et la CI utilisent
+  MariaDB 11.4).
 
 Installation :
 
@@ -59,11 +60,15 @@ ajouter ses origines dans `MOBILE_ALLOWED_ORIGINS` (liste separee par des
 virgules). `MOBILE_DEV_HOST` permet facultativement d'autoriser l'adresse LAN
 utilisee par Expo en developpement.
 
-Demarrer ensuite PostgreSQL :
+`DATABASE_URL` suit le format `mysql://USER:PASSWORD@HOST:3306/DATABASE`. Les
+caracteres speciaux du nom d'utilisateur et du mot de passe doivent etre encodes
+en pourcentage dans cette URL.
+
+Demarrer ensuite MariaDB :
 
 ```bash
 docker compose up -d
-pnpm db:push
+pnpm db:migrate
 pnpm exec prisma db seed
 ```
 

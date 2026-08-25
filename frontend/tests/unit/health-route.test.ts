@@ -47,7 +47,7 @@ describe("health route", () => {
     vi.stubEnv("APP_VERSION", "1.2.3");
     findFirstMock.mockRejectedValue(
       new Error(
-        "postgresql://admin:secret@database.internal/cesizen connection refused",
+        "mysql://admin:secret@database.internal/cesizen connection refused",
       ),
     );
 

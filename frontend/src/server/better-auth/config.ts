@@ -11,7 +11,7 @@ import {
 export const auth = betterAuth({
   baseURL: betterAuthBaseURL,
   database: prismaAdapter(db, {
-    provider: "postgresql",
+    provider: "mysql",
   }),
   trustedOrigins: betterAuthTrustedOrigins,
   emailAndPassword: {

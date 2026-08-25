@@ -1,18 +1,27 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:15-alpine
-    container_name: cesizen-postgres
-    restart: always
+    image: mariadb:11.4
+    container_name: cesizen-mariadb
+    restart: unless-stopped
     ports:
-      - "5432:5432" 
+      - "3306:3306"
     environment:
-      POSTGRES_USER: cesizen_user
-      POSTGRES_PASSWORD: cesizen_password
-      POSTGRES_DB: cesizen_db
+      MARIADB_DATABASE: cesizen_db
+      MARIADB_USER: cesizen_user
+      MARIADB_PASSWORD: cesizen_password
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
     volumes:
-      - cesizen_data:/var/lib/postgresql/data
+      - cesizen_mariadb_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  cesizen_data:
+  cesizen_mariadb_data:

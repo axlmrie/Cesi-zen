@@ -45,6 +45,7 @@ services:
       - "3000"
     networks:
       - cesizen-backend
+      - database
     stop_grace_period: 30s
     healthcheck:
       test:
@@ -71,3 +72,6 @@ networks:
   npm-proxy:
     external: true
     name: "${NPM_NETWORK:?NPM_NETWORK must name the external Nginx Proxy Manager network}"
+  database:
+    external: true
+    name: "${DATABASE_NETWORK:-db-tier}"

@@ -8,7 +8,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  // Prisma uses the MySQL connector for both MySQL and MariaDB.
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -26,7 +27,7 @@ model User {
   name          String // Requis par Better Auth (concaténation automatique)
   email         String  @unique
   emailVerified Boolean // Requis par Better Auth
-  image         String?
+  image         String? @db.Text
 
   // Tes champs personnalisés
   firstName String
@@ -60,7 +61,7 @@ model Session {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
-  userAgent String?
+  userAgent String?  @db.Text
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -73,13 +74,14 @@ model Account {
   providerId            String
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
+  // OAuth/JWT values can exceed MariaDB's default VARCHAR(191).
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -89,7 +91,7 @@ model Account {
 model Verification {
   id         String   @id @default(uuid())
   identifier String
-  value      String
+  value      String   @db.Text
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

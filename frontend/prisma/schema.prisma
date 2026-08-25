@@ -2,13 +2,14 @@
 // learn more: https://better-auth.com/docs/concepts/database
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "darwin-arm64", "windows"]
-  output   = "../generated/prisma"
+  output        = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  // Prisma uses the MySQL connector for both MySQL and MariaDB.
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -22,19 +23,19 @@ enum Role {
 }
 
 model User {
-  id               String    @id @default(uuid())
-  name             String    // Requis par Better Auth (concaténation automatique)
-  email            String    @unique
-  emailVerified    Boolean   // Requis par Better Auth
-  image            String?
-  
+  id            String  @id @default(uuid())
+  name          String // Requis par Better Auth (concaténation automatique)
+  email         String  @unique
+  emailVerified Boolean // Requis par Better Auth
+  image         String? @db.Text
+
   // Tes champs personnalisés
-  firstName        String
-  lastName         String
-  age              Int?
-  
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  firstName String
+  lastName  String
+  age       Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Champs ajoutés pour CESIZen & RGPD
   role             Role      @default(USER)
@@ -42,8 +43,8 @@ model User {
   dateConsentement DateTime? // RGPD : Preuve d'acceptation de la politique de confidentialité
 
   // Relations Better Auth
-  sessions         Session[]
-  accounts         Account[]
+  sessions Session[]
+  accounts Account[]
 
   // Relations CESIZen
   pagesRedigees       PageInfo[]
@@ -60,7 +61,7 @@ model Session {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
-  userAgent String?
+  userAgent String?  @db.Text
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -73,13 +74,14 @@ model Account {
   providerId            String
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
+  // OAuth/JWT values can exceed MariaDB's default VARCHAR(191).
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -89,14 +91,13 @@ model Account {
 model Verification {
   id         String   @id @default(uuid())
   identifier String
-  value      String
+  value      String   @db.Text
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@map("verification")
 }
-
 
 // ==========================================
 // 2. MODULE : INFORMATIONS (Obligatoire)
@@ -111,8 +112,8 @@ model PageInfo {
   dateMaj      DateTime @updatedAt
   isPublie     Boolean  @default(false)
 
-  auteurId     String
-  auteur       User     @relation(fields: [auteurId], references: [id])
+  auteurId String
+  auteur   User   @relation(fields: [auteurId], references: [id])
 
   @@map("page_info")
 }
@@ -126,18 +127,17 @@ model Menu {
   @@map("menu")
 }
 
-
 // ==========================================
 // 3. MODULE : DIAGNOSTIC DE STRESS (Optionnel 1)
 // ==========================================
 
 model EvenementStress {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   description String
   points      Int
-  isActif     Boolean  @default(true)
+  isActif     Boolean @default(true)
 
-  reponses    ReponseDiagnostic[]
+  reponses ReponseDiagnostic[]
 
   @@map("evenement_stress")
 }
@@ -148,10 +148,10 @@ model ResultatDiagnostic {
   scoreTotal     Int
   niveauStress   String
 
-  utilisateurId  String
-  utilisateur    User     @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  utilisateurId String
+  utilisateur   User   @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
-  reponses       ReponseDiagnostic[]
+  reponses ReponseDiagnostic[]
 
   @@map("resultat_diagnostic")
 }
@@ -160,35 +160,35 @@ model ReponseDiagnostic {
   resultatId  String
   evenementId String
 
-  resultat    ResultatDiagnostic @relation(fields: [resultatId], references: [id], onDelete: Cascade)
-  evenement   EvenementStress    @relation(fields: [evenementId], references: [id], onDelete: Cascade)
+  resultat  ResultatDiagnostic @relation(fields: [resultatId], references: [id], onDelete: Cascade)
+  evenement EvenementStress    @relation(fields: [evenementId], references: [id], onDelete: Cascade)
 
   @@id([resultatId, evenementId])
   @@map("reponse_diagnostic")
 }
 
-
-
 model EmotionNiveau1 {
-  id         String   @id @default(uuid())
-  libelle    String   @unique
+  id         String           @id @default(uuid())
+  libelle    String           @unique
   emotionsN2 EmotionNiveau2[]
+
   @@map("emotion_niveau_1")
 }
 
 model EmotionNiveau2 {
-  id          String   @id @default(uuid())
+  id          String           @id @default(uuid())
   libelle     String
   emotionN1Id String
   emotionN1   EmotionNiveau1   @relation(fields: [emotionN1Id], references: [id], onDelete: Cascade)
   journaux    JournalEmotion[]
+
   @@map("emotion_niveau_2")
 }
 
 model JournalEmotion {
-  id                 String   @id @default(uuid())
-  notePersonnelle    String?  @db.Text
-  dateEnregistrement DateTime @default(now())
+  id                 String         @id @default(uuid())
+  notePersonnelle    String?        @db.Text
+  dateEnregistrement DateTime       @default(now())
   utilisateurId      String
   emotionN2Id        String
   utilisateur        User           @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
@@ -196,15 +196,16 @@ model JournalEmotion {
 
   @@map("journal_emotion")
 }
+
 model ExerciceRespiration {
-  id             String   @id @default(uuid())
+  id             String @id @default(uuid())
   titre          String
   inspirationSec Int
   expirationSec  Int
   retenueSec     Int
-  
-  isCustom       Boolean  @default(false)
-  createurId     String?
+
+  isCustom   Boolean @default(false)
+  createurId String?
 
   @@map("exercice_respiration")
 }

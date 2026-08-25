@@ -32,7 +32,7 @@ FROM base AS builder
 
 ENV NEXT_TELEMETRY_DISABLED="1"
 ENV SKIP_ENV_VALIDATION="1"
-ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build"
+ENV DATABASE_URL="mysql://build:build@127.0.0.1:3306/build"
 ENV BETTER_AUTH_SECRET="build-only-placeholder-not-a-runtime-secret"
 ENV BETTER_AUTH_URL="http://localhost:3000"
 

@@ -32,16 +32,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
-      postgres:
-        image: postgres:16
+      mariadb:
+        image: mariadb:11.4
         env:
-          POSTGRES_USER: cesizen_ci
-          POSTGRES_PASSWORD: cesizen_ci
-          POSTGRES_DB: cesizen_ci
+          MARIADB_DATABASE: cesizen_ci
+          MARIADB_USER: cesizen_ci
+          MARIADB_PASSWORD: cesizen_ci
+          MARIADB_RANDOM_ROOT_PASSWORD: "1"
         ports:
-          - 5432:5432
+          - 3306:3306
         options: >-
-          --health-cmd "pg_isready -U cesizen_ci -d cesizen_ci"
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
@@ -76,7 +77,7 @@ jobs:
       - name: Verifier le build de production frontend
         env:
           SKIP_ENV_VALIDATION: "1"
-          DATABASE_URL: postgresql://build:build@127.0.0.1:5432/build
+          DATABASE_URL: mysql://build:build@127.0.0.1:3306/build
           BETTER_AUTH_SECRET: build-only-placeholder-not-a-runtime-secret
           BETTER_AUTH_URL: http://localhost:3000
         run: pnpm --dir frontend build
@@ -91,17 +92,22 @@ jobs:
 
       - name: Valider le schema et l'historique Prisma
         env:
-          DATABASE_URL: postgresql://cesizen_ci:cesizen_ci@127.0.0.1:5432/cesizen_ci
+          DATABASE_URL: mysql://cesizen_ci:cesizen_ci@127.0.0.1:3306/cesizen_ci
         run: |
           pnpm --dir frontend exec prisma validate
           test -s frontend/prisma/migrations/0_init/migration.sql
 
-      - name: Tester les migrations sur PostgreSQL
+      - name: Tester les migrations sur MariaDB
         env:
-          DATABASE_URL: postgresql://cesizen_ci:cesizen_ci@127.0.0.1:5432/cesizen_ci
+          DATABASE_URL: mysql://cesizen_ci:cesizen_ci@127.0.0.1:3306/cesizen_ci
         run: |
           pnpm --dir frontend exec prisma migrate deploy
           pnpm --dir frontend exec prisma migrate status
+          pnpm --dir frontend exec tsx tests/integration/mariadb-smoke.ts
+          pnpm --dir frontend exec prisma migrate diff \
+            --from-url "$DATABASE_URL" \
+            --to-schema-datamodel prisma/schema.prisma \
+            --exit-code
           pnpm --dir frontend exec prisma migrate deploy
 
   mobile-ci:
@@ -187,8 +193,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash -n deploy/common.sh deploy/scripts/*.sh deploy/tests/*.sh
-          bash deploy/tests/deploy-state-machine.test.sh
+          bash -n deploy/common.sh deploy/scripts/*.sh deploy/tests/*.sh frontend/start-database.sh frontend/tests/*.sh
+          shellcheck -x \
+            deploy/common.sh \
+            deploy/scripts/*.sh \
+            deploy/tests/*.test.sh \
+            frontend/start-database.sh \
+            frontend/tests/*.test.sh
+          for test_script in deploy/tests/*.test.sh frontend/tests/*.test.sh; do
+            bash "${test_script}"
+          done
 
       - name: Valider Docker Compose
         shell: bash

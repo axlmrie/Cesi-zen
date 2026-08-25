@@ -2,7 +2,7 @@ import { NavbarPublic } from "@/components/NavbarPublic";
 import { Footer } from "@/components/Footer";
 import { db } from "@/server/db";
 
-// The navigation is stored in PostgreSQL and must only be loaded at request time.
+// The navigation is stored in MariaDB and must only be loaded at request time.
 export const dynamic = "force-dynamic";
 
 export default async function PublicLayout({

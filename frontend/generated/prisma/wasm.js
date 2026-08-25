@@ -217,14 +217,98 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.QueryMode = {
-  default: 'default',
-  insensitive: 'insensitive'
-};
-
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.UserOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  image: 'image',
+  firstName: 'firstName',
+  lastName: 'lastName'
+};
+
+exports.Prisma.SessionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  token: 'token',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  userId: 'userId'
+};
+
+exports.Prisma.AccountOrderByRelevanceFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  providerId: 'providerId',
+  userId: 'userId',
+  accessToken: 'accessToken',
+  refreshToken: 'refreshToken',
+  idToken: 'idToken',
+  scope: 'scope',
+  password: 'password'
+};
+
+exports.Prisma.VerificationOrderByRelevanceFieldEnum = {
+  id: 'id',
+  identifier: 'identifier',
+  value: 'value'
+};
+
+exports.Prisma.PageInfoOrderByRelevanceFieldEnum = {
+  id: 'id',
+  titre: 'titre',
+  slug: 'slug',
+  contenu: 'contenu',
+  auteurId: 'auteurId'
+};
+
+exports.Prisma.MenuOrderByRelevanceFieldEnum = {
+  id: 'id',
+  label: 'label',
+  url: 'url'
+};
+
+exports.Prisma.EvenementStressOrderByRelevanceFieldEnum = {
+  id: 'id',
+  description: 'description'
+};
+
+exports.Prisma.ResultatDiagnosticOrderByRelevanceFieldEnum = {
+  id: 'id',
+  niveauStress: 'niveauStress',
+  utilisateurId: 'utilisateurId'
+};
+
+exports.Prisma.ReponseDiagnosticOrderByRelevanceFieldEnum = {
+  resultatId: 'resultatId',
+  evenementId: 'evenementId'
+};
+
+exports.Prisma.EmotionNiveau1OrderByRelevanceFieldEnum = {
+  id: 'id',
+  libelle: 'libelle'
+};
+
+exports.Prisma.EmotionNiveau2OrderByRelevanceFieldEnum = {
+  id: 'id',
+  libelle: 'libelle',
+  emotionN1Id: 'emotionN1Id'
+};
+
+exports.Prisma.JournalEmotionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  notePersonnelle: 'notePersonnelle',
+  utilisateurId: 'utilisateurId',
+  emotionN2Id: 'emotionN2Id'
+};
+
+exports.Prisma.ExerciceRespirationOrderByRelevanceFieldEnum = {
+  id: 'id',
+  titre: 'titre',
+  createurId: 'createurId'
 };
 exports.Role = exports.$Enums.Role = {
   USER: 'USER',
@@ -257,7 +341,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/axel/Documents/Cesi-zen/frontend/generated/prisma",
+      "value": "C:\\Users\\a.marie\\Desktop\\Cesi-zen\\frontend\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -266,7 +350,7 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "darwin-arm64",
+        "value": "windows",
         "native": true
       },
       {
@@ -279,12 +363,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/axel/Documents/Cesi-zen/frontend/prisma/schema.prisma",
+    "sourceFilePath": "C:\\Users\\a.marie\\Desktop\\Cesi-zen\\frontend\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../prisma",
   "clientVersion": "6.19.3",
@@ -292,7 +375,8 @@ const config = {
   "datasourceNames": [
     "db"
   ],
-  "activeProvider": "postgresql",
+  "activeProvider": "mysql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -301,8 +385,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// Prisma schema for Better Auth & CESIZen\n// learn more: https://better-auth.com/docs/concepts/database\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  binaryTargets = [\"native\", \"darwin-arm64\", \"windows\"]\n  output        = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\n// ==========================================\n// 1. UTILISATEURS & AUTHENTIFICATION (BETTER AUTH)\n// ==========================================\n\nenum Role {\n  USER\n  ADMIN\n}\n\nmodel User {\n  id            String  @id @default(uuid())\n  name          String // Requis par Better Auth (concaténation automatique)\n  email         String  @unique\n  emailVerified Boolean // Requis par Better Auth\n  image         String?\n\n  // Tes champs personnalisés\n  firstName String\n  lastName  String\n  age       Int?\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  // Champs ajoutés pour CESIZen & RGPD\n  role             Role      @default(USER)\n  isActif          Boolean   @default(true) // Soft-delete : ne jamais supprimer physiquement direct\n  dateConsentement DateTime? // RGPD : Preuve d'acceptation de la politique de confidentialité\n\n  // Relations Better Auth\n  sessions Session[]\n  accounts Account[]\n\n  // Relations CESIZen\n  pagesRedigees       PageInfo[]\n  resultatsDiagnostic ResultatDiagnostic[]\n  journalEmotions     JournalEmotion[]\n\n  @@map(\"user\")\n}\n\nmodel Session {\n  id        String   @id @default(uuid())\n  expiresAt DateTime\n  token     String   @unique\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  ipAddress String?\n  userAgent String?\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@map(\"session\")\n}\n\nmodel Account {\n  id                    String    @id @default(uuid())\n  accountId             String\n  providerId            String\n  userId                String\n  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n  accessToken           String?\n  refreshToken          String?\n  idToken               String?\n  accessTokenExpiresAt  DateTime?\n  refreshTokenExpiresAt DateTime?\n  scope                 String?\n  password              String?\n  createdAt             DateTime  @default(now())\n  updatedAt             DateTime  @updatedAt\n\n  @@map(\"account\")\n}\n\nmodel Verification {\n  id         String   @id @default(uuid())\n  identifier String\n  value      String\n  expiresAt  DateTime\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  @@map(\"verification\")\n}\n\n// ==========================================\n// 2. MODULE : INFORMATIONS (Obligatoire)\n// ==========================================\n\nmodel PageInfo {\n  id           String   @id @default(uuid())\n  titre        String\n  slug         String   @unique\n  contenu      String   @db.Text\n  dateCreation DateTime @default(now())\n  dateMaj      DateTime @updatedAt\n  isPublie     Boolean  @default(false)\n\n  auteurId String\n  auteur   User   @relation(fields: [auteurId], references: [id])\n\n  @@map(\"page_info\")\n}\n\nmodel Menu {\n  id             String @id @default(uuid())\n  label          String\n  url            String\n  ordreAffichage Int\n\n  @@map(\"menu\")\n}\n\n// ==========================================\n// 3. MODULE : DIAGNOSTIC DE STRESS (Optionnel 1)\n// ==========================================\n\nmodel EvenementStress {\n  id          String  @id @default(uuid())\n  description String\n  points      Int\n  isActif     Boolean @default(true)\n\n  reponses ReponseDiagnostic[]\n\n  @@map(\"evenement_stress\")\n}\n\nmodel ResultatDiagnostic {\n  id             String   @id @default(uuid())\n  dateEvaluation DateTime @default(now())\n  scoreTotal     Int\n  niveauStress   String\n\n  utilisateurId String\n  utilisateur   User   @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)\n\n  reponses ReponseDiagnostic[]\n\n  @@map(\"resultat_diagnostic\")\n}\n\nmodel ReponseDiagnostic {\n  resultatId  String\n  evenementId String\n\n  resultat  ResultatDiagnostic @relation(fields: [resultatId], references: [id], onDelete: Cascade)\n  evenement EvenementStress    @relation(fields: [evenementId], references: [id], onDelete: Cascade)\n\n  @@id([resultatId, evenementId])\n  @@map(\"reponse_diagnostic\")\n}\n\nmodel EmotionNiveau1 {\n  id         String           @id @default(uuid())\n  libelle    String           @unique\n  emotionsN2 EmotionNiveau2[]\n\n  @@map(\"emotion_niveau_1\")\n}\n\nmodel EmotionNiveau2 {\n  id          String           @id @default(uuid())\n  libelle     String\n  emotionN1Id String\n  emotionN1   EmotionNiveau1   @relation(fields: [emotionN1Id], references: [id], onDelete: Cascade)\n  journaux    JournalEmotion[]\n\n  @@map(\"emotion_niveau_2\")\n}\n\nmodel JournalEmotion {\n  id                 String         @id @default(uuid())\n  notePersonnelle    String?        @db.Text\n  dateEnregistrement DateTime       @default(now())\n  utilisateurId      String\n  emotionN2Id        String\n  utilisateur        User           @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)\n  emotionN2          EmotionNiveau2 @relation(fields: [emotionN2Id], references: [id])\n\n  @@map(\"journal_emotion\")\n}\n\nmodel ExerciceRespiration {\n  id             String @id @default(uuid())\n  titre          String\n  inspirationSec Int\n  expirationSec  Int\n  retenueSec     Int\n\n  isCustom   Boolean @default(false)\n  createurId String?\n\n  @@map(\"exercice_respiration\")\n}\n",
-  "inlineSchemaHash": "ed1f8351a6f806809f0b6cc61a9dfa9738f67309ccee743d1d9c9867489358f4",
+  "inlineSchema": "// Prisma schema for Better Auth & CESIZen\n// learn more: https://better-auth.com/docs/concepts/database\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  binaryTargets = [\"native\", \"darwin-arm64\", \"windows\"]\n  output        = \"../generated/prisma\"\n}\n\ndatasource db {\n  // Prisma uses the MySQL connector for both MySQL and MariaDB.\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\n// ==========================================\n// 1. UTILISATEURS & AUTHENTIFICATION (BETTER AUTH)\n// ==========================================\n\nenum Role {\n  USER\n  ADMIN\n}\n\nmodel User {\n  id            String  @id @default(uuid())\n  name          String // Requis par Better Auth (concaténation automatique)\n  email         String  @unique\n  emailVerified Boolean // Requis par Better Auth\n  image         String? @db.Text\n\n  // Tes champs personnalisés\n  firstName String\n  lastName  String\n  age       Int?\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  // Champs ajoutés pour CESIZen & RGPD\n  role             Role      @default(USER)\n  isActif          Boolean   @default(true) // Soft-delete : ne jamais supprimer physiquement direct\n  dateConsentement DateTime? // RGPD : Preuve d'acceptation de la politique de confidentialité\n\n  // Relations Better Auth\n  sessions Session[]\n  accounts Account[]\n\n  // Relations CESIZen\n  pagesRedigees       PageInfo[]\n  resultatsDiagnostic ResultatDiagnostic[]\n  journalEmotions     JournalEmotion[]\n\n  @@map(\"user\")\n}\n\nmodel Session {\n  id        String   @id @default(uuid())\n  expiresAt DateTime\n  token     String   @unique\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  ipAddress String?\n  userAgent String?  @db.Text\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@map(\"session\")\n}\n\nmodel Account {\n  id                    String    @id @default(uuid())\n  accountId             String\n  providerId            String\n  userId                String\n  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n  // OAuth/JWT values can exceed MariaDB's default VARCHAR(191).\n  accessToken           String?   @db.Text\n  refreshToken          String?   @db.Text\n  idToken               String?   @db.Text\n  accessTokenExpiresAt  DateTime?\n  refreshTokenExpiresAt DateTime?\n  scope                 String?   @db.Text\n  password              String?   @db.Text\n  createdAt             DateTime  @default(now())\n  updatedAt             DateTime  @updatedAt\n\n  @@map(\"account\")\n}\n\nmodel Verification {\n  id         String   @id @default(uuid())\n  identifier String\n  value      String   @db.Text\n  expiresAt  DateTime\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n\n  @@map(\"verification\")\n}\n\n// ==========================================\n// 2. MODULE : INFORMATIONS (Obligatoire)\n// ==========================================\n\nmodel PageInfo {\n  id           String   @id @default(uuid())\n  titre        String\n  slug         String   @unique\n  contenu      String   @db.Text\n  dateCreation DateTime @default(now())\n  dateMaj      DateTime @updatedAt\n  isPublie     Boolean  @default(false)\n\n  auteurId String\n  auteur   User   @relation(fields: [auteurId], references: [id])\n\n  @@map(\"page_info\")\n}\n\nmodel Menu {\n  id             String @id @default(uuid())\n  label          String\n  url            String\n  ordreAffichage Int\n\n  @@map(\"menu\")\n}\n\n// ==========================================\n// 3. MODULE : DIAGNOSTIC DE STRESS (Optionnel 1)\n// ==========================================\n\nmodel EvenementStress {\n  id          String  @id @default(uuid())\n  description String\n  points      Int\n  isActif     Boolean @default(true)\n\n  reponses ReponseDiagnostic[]\n\n  @@map(\"evenement_stress\")\n}\n\nmodel ResultatDiagnostic {\n  id             String   @id @default(uuid())\n  dateEvaluation DateTime @default(now())\n  scoreTotal     Int\n  niveauStress   String\n\n  utilisateurId String\n  utilisateur   User   @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)\n\n  reponses ReponseDiagnostic[]\n\n  @@map(\"resultat_diagnostic\")\n}\n\nmodel ReponseDiagnostic {\n  resultatId  String\n  evenementId String\n\n  resultat  ResultatDiagnostic @relation(fields: [resultatId], references: [id], onDelete: Cascade)\n  evenement EvenementStress    @relation(fields: [evenementId], references: [id], onDelete: Cascade)\n\n  @@id([resultatId, evenementId])\n  @@map(\"reponse_diagnostic\")\n}\n\nmodel EmotionNiveau1 {\n  id         String           @id @default(uuid())\n  libelle    String           @unique\n  emotionsN2 EmotionNiveau2[]\n\n  @@map(\"emotion_niveau_1\")\n}\n\nmodel EmotionNiveau2 {\n  id          String           @id @default(uuid())\n  libelle     String\n  emotionN1Id String\n  emotionN1   EmotionNiveau1   @relation(fields: [emotionN1Id], references: [id], onDelete: Cascade)\n  journaux    JournalEmotion[]\n\n  @@map(\"emotion_niveau_2\")\n}\n\nmodel JournalEmotion {\n  id                 String         @id @default(uuid())\n  notePersonnelle    String?        @db.Text\n  dateEnregistrement DateTime       @default(now())\n  utilisateurId      String\n  emotionN2Id        String\n  utilisateur        User           @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)\n  emotionN2          EmotionNiveau2 @relation(fields: [emotionN2Id], references: [id])\n\n  @@map(\"journal_emotion\")\n}\n\nmodel ExerciceRespiration {\n  id             String @id @default(uuid())\n  titre          String\n  inspirationSec Int\n  expirationSec  Int\n  retenueSec     Int\n\n  isCustom   Boolean @default(false)\n  createurId String?\n\n  @@map(\"exercice_respiration\")\n}\n",
+  "inlineSchemaHash": "7dfe7b590d1814a32fec6658a4819770b2160aea23308b7b1e5d30eca7cfde02",
   "copyEngine": true
 }
 config.dirname = '/'

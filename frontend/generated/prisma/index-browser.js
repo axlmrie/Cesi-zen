@@ -245,14 +245,98 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.QueryMode = {
-  default: 'default',
-  insensitive: 'insensitive'
-};
-
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.UserOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  image: 'image',
+  firstName: 'firstName',
+  lastName: 'lastName'
+};
+
+exports.Prisma.SessionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  token: 'token',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  userId: 'userId'
+};
+
+exports.Prisma.AccountOrderByRelevanceFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  providerId: 'providerId',
+  userId: 'userId',
+  accessToken: 'accessToken',
+  refreshToken: 'refreshToken',
+  idToken: 'idToken',
+  scope: 'scope',
+  password: 'password'
+};
+
+exports.Prisma.VerificationOrderByRelevanceFieldEnum = {
+  id: 'id',
+  identifier: 'identifier',
+  value: 'value'
+};
+
+exports.Prisma.PageInfoOrderByRelevanceFieldEnum = {
+  id: 'id',
+  titre: 'titre',
+  slug: 'slug',
+  contenu: 'contenu',
+  auteurId: 'auteurId'
+};
+
+exports.Prisma.MenuOrderByRelevanceFieldEnum = {
+  id: 'id',
+  label: 'label',
+  url: 'url'
+};
+
+exports.Prisma.EvenementStressOrderByRelevanceFieldEnum = {
+  id: 'id',
+  description: 'description'
+};
+
+exports.Prisma.ResultatDiagnosticOrderByRelevanceFieldEnum = {
+  id: 'id',
+  niveauStress: 'niveauStress',
+  utilisateurId: 'utilisateurId'
+};
+
+exports.Prisma.ReponseDiagnosticOrderByRelevanceFieldEnum = {
+  resultatId: 'resultatId',
+  evenementId: 'evenementId'
+};
+
+exports.Prisma.EmotionNiveau1OrderByRelevanceFieldEnum = {
+  id: 'id',
+  libelle: 'libelle'
+};
+
+exports.Prisma.EmotionNiveau2OrderByRelevanceFieldEnum = {
+  id: 'id',
+  libelle: 'libelle',
+  emotionN1Id: 'emotionN1Id'
+};
+
+exports.Prisma.JournalEmotionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  notePersonnelle: 'notePersonnelle',
+  utilisateurId: 'utilisateurId',
+  emotionN2Id: 'emotionN2Id'
+};
+
+exports.Prisma.ExerciceRespirationOrderByRelevanceFieldEnum = {
+  id: 'id',
+  titre: 'titre',
+  createurId: 'createurId'
 };
 exports.Role = exports.$Enums.Role = {
   USER: 'USER',

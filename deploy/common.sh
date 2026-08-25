@@ -51,7 +51,7 @@ resolve_existing_file() {
 
 is_supported_deploy_key() {
   case "$1" in
-    CESIZEN_IMAGE | COMPOSE_PROJECT_NAME | DEPLOY_HEALTH_INTERVAL | \
+    CESIZEN_IMAGE | COMPOSE_PROJECT_NAME | DATABASE_NETWORK | DEPLOY_HEALTH_INTERVAL | \
       DEPLOY_HEALTH_TIMEOUT | INFRA_HEALTH_TIMEOUT | MAINTENANCE_CONTAINER | \
       MAINTENANCE_PORT | NGINX_IMAGE | NPM_NETWORK | PRODUCTION_ENV_FILE)
       return 0
@@ -102,7 +102,7 @@ parse_deploy_env_file() {
     # Explicit process environment values take precedence for CI deployments.
     if [[ ! -v "${key}" ]]; then
       printf -v "${key}" '%s' "${value}"
-      export "${key}"
+      export "${key?}"
     fi
   done <"${env_file}"
 }
@@ -191,8 +191,8 @@ validate_production_environment() {
   auth_secret="$(read_env_assignment BETTER_AUTH_SECRET "${PRODUCTION_ENV_FILE}")"
   auth_url="$(read_env_assignment BETTER_AUTH_URL "${PRODUCTION_ENV_FILE}")"
 
-  [[ "${database_url}" == postgresql://* || "${database_url}" == postgres://* ]] || \
-    die "DATABASE_URL must use the postgresql:// or postgres:// scheme."
+  [[ "${database_url}" == mysql://* ]] || \
+    die "DATABASE_URL must use the mysql:// scheme required by Prisma for MariaDB."
   [[ ${#auth_secret} -ge 32 ]] || \
     die "BETTER_AUTH_SECRET must contain at least 32 characters."
   [[ "${auth_secret}" != \#* ]] || \
@@ -240,6 +240,7 @@ load_and_validate_environment() {
   : "${INFRA_HEALTH_TIMEOUT:=60}"
   : "${MAINTENANCE_CONTAINER:=maintenance-web}"
   : "${MAINTENANCE_PORT:=80}"
+  : "${DATABASE_NETWORK:=db-tier}"
   : "${PRODUCTION_ENV_FILE:=.env.production}"
 
   : "${CESIZEN_IMAGE:?CESIZEN_IMAGE is required in .env.deploy or the process environment}"
@@ -249,6 +250,8 @@ load_and_validate_environment() {
     die "CESIZEN_IMAGE must be a full tagged or digest-pinned ghcr.io reference."
   [[ "${NPM_NETWORK}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || \
     die "NPM_NETWORK contains unsupported characters."
+  [[ "${DATABASE_NETWORK}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || \
+    die "DATABASE_NETWORK contains unsupported characters."
   [[ "${COMPOSE_PROJECT_NAME}" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || \
     die "COMPOSE_PROJECT_NAME must use lowercase letters, digits, underscores or hyphens."
   [[ "${MAINTENANCE_CONTAINER}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || \
@@ -271,7 +274,7 @@ load_and_validate_environment() {
   [[ "${PRODUCTION_ENV_FILE}" =~ ^/[A-Za-z0-9._/@+-]+$ ]] || \
     die "PRODUCTION_ENV_FILE must resolve to a safe absolute Ubuntu path."
 
-  export CESIZEN_IMAGE COMPOSE_PROJECT_NAME DEPLOY_HEALTH_INTERVAL
+  export CESIZEN_IMAGE COMPOSE_PROJECT_NAME DATABASE_NETWORK DEPLOY_HEALTH_INTERVAL
   export DEPLOY_HEALTH_TIMEOUT INFRA_HEALTH_TIMEOUT MAINTENANCE_CONTAINER
   export MAINTENANCE_PORT NGINX_IMAGE NPM_NETWORK PRODUCTION_ENV_FILE
 
@@ -352,6 +355,8 @@ initialize_deploy_context() {
     die "The Docker daemon is unavailable for the current user."
   docker network inspect "${NPM_NETWORK}" >/dev/null 2>&1 || \
     die "External NPM network not found: ${NPM_NETWORK}"
+  docker network inspect "${DATABASE_NETWORK}" >/dev/null 2>&1 || \
+    die "External database network not found: ${DATABASE_NETWORK}"
 
   assert_compose_container_ownership cesizen-router cesizen-router
   assert_compose_container_ownership cesizen-web cesizen-web

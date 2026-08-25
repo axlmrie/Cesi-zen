@@ -110,7 +110,14 @@ Redéployer ensuite NPM avec ce réseau et utiliser exactement son nom dans
 `NPM_NETWORK`. Le Compose CesiZen y connecte `cesizen-router`. À chaque bascule, le
 script vérifie aussi le conteneur de maintenance existant, le démarre si nécessaire
 et le connecte à ce même réseau de façon idempotente. Il ne le crée, ne le recrée et
-ne l'arrête jamais. `cesizen-web` reste seul sur le réseau privé du projet.
+ne l'arrête jamais. `cesizen-web` rejoint uniquement le réseau privé du projet et le
+réseau MariaDB externe ; le routeur n'accède pas à la base.
+
+Le réseau MariaDB partagé doit lui aussi exister avant le déploiement :
+
+```bash
+docker network inspect db-tier >/dev/null
+```
 
 Le conteneur externe doit déjà servir la page de maintenance sur le port configuré.
 Vérifier son existence avant le premier déploiement :
@@ -142,6 +149,7 @@ Modifier `.env.deploy` :
 - `CESIZEN_IMAGE` doit être une référence complète `ghcr.io/...` avec tag explicite
   ou digest ; un digest ou un tag de commit immuable est recommandé ;
 - `NPM_NETWORK` doit être le réseau externe préparé ci-dessus ;
+- `DATABASE_NETWORK` doit être le réseau externe partagé avec MariaDB (`db-tier`) ;
 - `MAINTENANCE_CONTAINER` est le nom du conteneur de maintenance existant
   (`maintenance-web` par défaut) ;
 - `MAINTENANCE_PORT` est son port HTTP interne (`80` par défaut) ;
@@ -152,11 +160,15 @@ Modifier `.env.deploy` :
 Modifier `.env.production` et remplacer tous les exemples. Le script vérifie sans les
 afficher :
 
-- une `DATABASE_URL` PostgreSQL ;
+- une `DATABASE_URL` MariaDB au format `mysql://...` ;
 - un `BETTER_AUTH_SECRET` d'au moins 32 caractères ;
 - un `BETTER_AUTH_URL` public en HTTPS.
 
-Pour le déploiement automatisé des migrations, le rôle PostgreSQL de `DATABASE_URL`
+L'URL MariaDB suit le format `mysql://USER:PASSWORD@HOST:3306/DATABASE`. Encoder
+en pourcentage les caractères réservés du nom d'utilisateur et du mot de passe
+(`@` devient `%40`, par exemple) ; ne pas entourer une valeur réelle de chevrons.
+
+Pour le déploiement automatisé des migrations, l'utilisateur MariaDB de `DATABASE_URL`
 doit également disposer des droits DDL strictement nécessaires aux migrations validées
 (`CREATE`, `ALTER`, `DROP`, etc.). `prisma migrate deploy` ne requiert pas de shadow
 database en production. Vérifier ces droits avant l'activation sans afficher l'URL
@@ -208,9 +220,12 @@ mode npm hors ligne garantissent que `npx` utilise la CLI déjà installée dans
 sans télécharger de paquet au moment du déploiement. Prisma découvre alors
 `/app/prisma/schema.prisma` et son historique automatiquement.
 
-PostgreSQL doit être joignable depuis `cesizen-backend`. Si la base se trouve sur un
-autre réseau Docker, ce réseau doit être déclaré dans le Compose avant le premier
-déploiement. Le rôle de `DATABASE_URL` doit posséder les droits DDL requis.
+Le conteneur `cesizen-web` rejoint le réseau Docker externe défini par
+`DATABASE_NETWORK` (`db-tier` par défaut). Le conteneur MariaDB partagé doit rejoindre
+ce même réseau ; `DATABASE_URL` utilise alors son nom DNS Docker, par exemple
+`mariadb-shared`, et jamais une adresse IP de conteneur. Il n'est pas nécessaire de
+publier le port 3306 sur l'hôte. L'utilisateur de `DATABASE_URL` doit posséder les
+droits DDL sur la seule base CESIZen pour permettre les migrations Prisma.
 
 L'ordre appliqué est le suivant :
 
@@ -228,7 +243,7 @@ automatiquement de migration descendante pour ce cas. Chaque migration de produc
 doit donc rester compatible avec l'ancienne version de l'application selon une
 stratégie _expand/contract_ : ajouter d'abord les nouvelles structures, migrer les
 données et le code, puis supprimer les anciennes structures dans une release
-ultérieure. Tester aussi la restauration d'une sauvegarde PostgreSQL avant toute
+ultérieure. Tester aussi la restauration d'une sauvegarde MariaDB avant toute
 migration importante.
 
 Si une migration ou la nouvelle application échoue, le script tente de restaurer
@@ -253,7 +268,7 @@ le premier déploiement automatisé**. Sinon Prisma tentera d'appliquer `0_init`
 échouera sur les objets existants. Cette opération reste manuelle et ne doit jamais
 être automatisée dans `deploy.sh` :
 
-1. sauvegarder PostgreSQL et tester la restauration sur une copie isolée ;
+1. sauvegarder MariaDB et tester la restauration sur une copie isolée ;
 2. vérifier que `prisma/schema.prisma` décrit exactement la base existante, de
    préférence en comparant avec une copie de production ;
 3. relire et faire valider le SQL versionné dans
@@ -283,10 +298,13 @@ si sa durée maximale testée l'exige ; `DEPLOY_HEALTH_TIMEOUT` ne couvre que le
 démarrage de l'application.
 
 La CI exécute `prisma validate`, vérifie la présence de `0_init`, puis applique tout
-l'historique sur un service PostgreSQL 16 vierge. Elle contrôle ensuite
-`prisma migrate status` et relance `migrate deploy` pour vérifier qu'aucune migration
-ne reste en attente. Les scénarios de `deploy/tests/` sont également exécutés et le
-build de l'image confirme que la CLI verrouillée est résoluble hors ligne.
+l'historique sur un service MariaDB 11.4 vierge. Elle contrôle ensuite
+`prisma migrate status`, compare le schéma obtenu au modèle Prisma et relance
+`migrate deploy` pour vérifier qu'aucune migration ne reste en attente. Un test
+d'intégration écrit et relit aussi les champs longs Better Auth, utilise une
+transaction sérialisable et vérifie les suppressions en cascade. Les scénarios de
+`deploy/tests/` sont également exécutés et le build de l'image confirme que la CLI
+verrouillée est résoluble hors ligne.
 
 Références Prisma officielles :
 
@@ -414,5 +432,5 @@ PRODUCTION_ENV_FILE="$PWD/.env.production" \
 bash -n common.sh scripts/*.sh
 ```
 
-Avant toute mise à jour importante, conserver une sauvegarde testée de PostgreSQL et
+Avant toute mise à jour importante, conserver une sauvegarde testée de MariaDB et
 vérifier l'espace disque disponible pour l'image cible et l'image locale de rollback.

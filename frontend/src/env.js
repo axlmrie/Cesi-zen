@@ -12,7 +12,13 @@ export const env = createEnv({
         ? z.string()
         : z.string().optional(),
     BETTER_AUTH_URL: z.string().url().optional(),
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z
+      .string()
+      .url()
+      .refine((value) => value.startsWith("mysql://"), {
+        message:
+          "DATABASE_URL doit utiliser le protocole mysql:// pour MariaDB",
+      }),
     MOBILE_ALLOWED_ORIGINS: z.string().optional(),
     MOBILE_DEV_HOST: z.string().optional(),
     NODE_ENV: z

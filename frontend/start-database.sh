@@ -1,88 +1,118 @@
 #!/usr/bin/env bash
-# Use this script to start a docker container for a local development database
 
-# TO RUN ON WINDOWS:
-# 1. Install WSL (Windows Subsystem for Linux) - https://learn.microsoft.com/en-us/windows/wsl/install
-# 2. Install Docker Desktop or Podman Deskop
-# - Docker Desktop for Windows - https://docs.docker.com/docker-for-windows/install/
-# - Podman Desktop - https://podman.io/getting-started/installation
-# 3. Open WSL - `wsl`
-# 4. Run this script - `./start-database.sh`
+# Start a MariaDB container for local development using DATABASE_URL from .env.
 
-# On Linux and macOS you can run this script directly - `./start-database.sh`
+set -Eeuo pipefail
 
-# import env variables from .env
-set -a
-source .env
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+ENV_FILE="${SCRIPT_DIR}/.env"
 
-DB_PASSWORD=$(echo "$DATABASE_URL" | awk -F':' '{print $3}' | awk -F'@' '{print $1}')
-DB_PORT=$(echo "$DATABASE_URL" | awk -F':' '{print $4}' | awk -F'\/' '{print $1}')
-DB_NAME=$(echo "$DATABASE_URL" | awk -F'/' '{print $4}')
-DB_CONTAINER_NAME="$DB_NAME-postgres"
-
-if ! [ -x "$(command -v docker)" ] && ! [ -x "$(command -v podman)" ]; then
-  echo -e "Docker or Podman is not installed. Please install docker or podman and try again.\nDocker install guide: https://docs.docker.com/engine/install/\nPodman install guide: https://podman.io/getting-started/installation"
+die() {
+  printf 'ERROR: %s\n' "$*" >&2
   exit 1
+}
+
+[[ -f "${ENV_FILE}" ]] || \
+  die "${ENV_FILE} is missing. Copy .env.example to .env first."
+
+DATABASE_URL="$({
+  sed -n -E \
+    's/^[[:space:]]*(export[[:space:]]+)?DATABASE_URL[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$/\2/p' \
+    "${ENV_FILE}" | head -n 1
+})"
+
+if [[ "${DATABASE_URL}" == \"*\" && ${#DATABASE_URL} -ge 2 ]]; then
+  DATABASE_URL="${DATABASE_URL:1:${#DATABASE_URL}-2}"
+elif [[ "${DATABASE_URL}" == \'*\' && ${#DATABASE_URL} -ge 2 ]]; then
+  DATABASE_URL="${DATABASE_URL:1:${#DATABASE_URL}-2}"
 fi
 
-# determine which docker command to use
-if [ -x "$(command -v docker)" ]; then
-  DOCKER_CMD="docker"
-elif [ -x "$(command -v podman)" ]; then
-  DOCKER_CMD="podman"
-fi
+[[ -n "${DATABASE_URL}" ]] || die "DATABASE_URL is missing from ${ENV_FILE}."
+command -v node >/dev/null 2>&1 || die "Node.js is required to parse DATABASE_URL safely."
 
-if ! $DOCKER_CMD info > /dev/null 2>&1; then
-  echo "$DOCKER_CMD daemon is not running. Please start $DOCKER_CMD and try again."
-  exit 1
-fi
+PARSED_DATABASE="$({
+  # Node can include its input in an URL parsing error; suppress stderr so a
+  # malformed URL never leaks database credentials in CI or terminal logs.
+  DATABASE_URL="${DATABASE_URL}" node 2>/dev/null <<'NODE'
+const url = new URL(process.env.DATABASE_URL ?? "");
 
-if command -v nc >/dev/null 2>&1; then
-  if nc -z localhost "$DB_PORT" 2>/dev/null; then
-    echo "Port $DB_PORT is already in use."
-    exit 1
-  fi
+if (url.protocol !== "mysql:") {
+  throw new Error("DATABASE_URL must use mysql:// for MariaDB");
+}
+
+const decode = (value) => decodeURIComponent(value);
+const values = [
+  decode(url.username),
+  decode(url.password),
+  url.hostname,
+  url.port || "3306",
+  decode(url.pathname.replace(/^\//, "")),
+];
+
+if (values.some((value) => /[\r\n]/.test(value))) {
+  throw new Error("DATABASE_URL components must not contain line breaks");
+}
+
+process.stdout.write(`${values.join("\n")}\n`);
+NODE
+})" || die "DATABASE_URL is not a valid MariaDB connection URL."
+
+mapfile -t DB_PARTS <<<"${PARSED_DATABASE}"
+[[ ${#DB_PARTS[@]} -eq 5 ]] || die "DATABASE_URL could not be parsed."
+
+DB_USER="${DB_PARTS[0]}"
+DB_PASSWORD="${DB_PARTS[1]}"
+DB_HOST="${DB_PARTS[2]}"
+DB_PORT="${DB_PARTS[3]}"
+DB_NAME="${DB_PARTS[4]}"
+
+[[ "${DB_HOST}" == localhost || "${DB_HOST}" == 127.0.0.1 || \
+  "${DB_HOST}" == "[::1]" ]] || \
+  die "start-database.sh only manages a local MariaDB URL."
+[[ "${DB_PORT}" =~ ^[0-9]{1,5}$ ]] && \
+  ((10#${DB_PORT} >= 1 && 10#${DB_PORT} <= 65535)) || \
+  die "The MariaDB port must be between 1 and 65535."
+[[ "${DB_USER}" =~ ^[A-Za-z0-9_]+$ ]] || die "The MariaDB user name is invalid."
+[[ "${DB_USER}" != root ]] || die "Use a dedicated MariaDB user instead of root."
+[[ -n "${DB_PASSWORD}" ]] || die "The MariaDB password must not be empty."
+[[ "${DB_NAME}" =~ ^[A-Za-z0-9_]+$ ]] || die "The MariaDB database name is invalid."
+
+DB_CONTAINER_NAME="cesizen-mariadb-${DB_NAME}"
+
+if command -v docker >/dev/null 2>&1; then
+  CONTAINER_CMD="docker"
+elif command -v podman >/dev/null 2>&1; then
+  CONTAINER_CMD="podman"
 else
-  echo "Warning: Unable to check if port $DB_PORT is already in use (netcat not installed)"
-  read -p "Do you want to continue anyway? [y/N]: " -r REPLY
-  if ! [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Aborting."
-    exit 1
-  fi
+  die "Docker or Podman is not installed."
 fi
 
-if [ "$($DOCKER_CMD ps -q -f name=$DB_CONTAINER_NAME)" ]; then
-  echo "Database container '$DB_CONTAINER_NAME' already running"
-  exit 0
-fi
+"${CONTAINER_CMD}" info >/dev/null 2>&1 || \
+  die "The ${CONTAINER_CMD} daemon is unavailable."
 
-if [ "$($DOCKER_CMD ps -q -a -f name=$DB_CONTAINER_NAME)" ]; then
-  $DOCKER_CMD start "$DB_CONTAINER_NAME"
-  echo "Existing database container '$DB_CONTAINER_NAME' started"
-  exit 0
-fi
-
-if [ "$DB_PASSWORD" = "password" ]; then
-  echo "You are using the default database password"
-  read -p "Should we generate a random password for you? [y/N]: " -r REPLY
-  if ! [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Please change the default password in the .env file and try again"
-    exit 1
-  fi
-  # Generate a random URL-safe password
-  DB_PASSWORD=$(openssl rand -base64 12 | tr '+/' '-_')
-  if [[ "$(uname)" == "Darwin" ]]; then
-    # macOS requires an empty string to be passed with the `i` flag
-    sed -i '' "s#:password@#:$DB_PASSWORD@#" .env
+if "${CONTAINER_CMD}" container inspect "${DB_CONTAINER_NAME}" >/dev/null 2>&1; then
+  if [[ "$("${CONTAINER_CMD}" inspect --format '{{.State.Running}}' "${DB_CONTAINER_NAME}")" == true ]]; then
+    printf "MariaDB container '%s' is already running.\n" "${DB_CONTAINER_NAME}"
   else
-    sed -i "s#:password@#:$DB_PASSWORD@#" .env
+    "${CONTAINER_CMD}" start "${DB_CONTAINER_NAME}" >/dev/null
+    printf "Existing MariaDB container '%s' started.\n" "${DB_CONTAINER_NAME}"
   fi
+  exit 0
 fi
 
-$DOCKER_CMD run -d \
-  --name $DB_CONTAINER_NAME \
-  -e POSTGRES_USER="postgres" \
-  -e POSTGRES_PASSWORD="$DB_PASSWORD" \
-  -e POSTGRES_DB="$DB_NAME" \
-  -p "$DB_PORT":5432 \
-  docker.io/postgres && echo "Database container '$DB_CONTAINER_NAME' was successfully created"
+if command -v nc >/dev/null 2>&1 && nc -z localhost "${DB_PORT}" 2>/dev/null; then
+  die "Port ${DB_PORT} is already in use."
+fi
+
+"${CONTAINER_CMD}" run --detach \
+  --name "${DB_CONTAINER_NAME}" \
+  --env MARIADB_DATABASE="${DB_NAME}" \
+  --env MARIADB_USER="${DB_USER}" \
+  --env MARIADB_PASSWORD="${DB_PASSWORD}" \
+  --env MARIADB_RANDOM_ROOT_PASSWORD=1 \
+  --publish "${DB_PORT}:3306" \
+  --volume "${DB_CONTAINER_NAME}-data:/var/lib/mysql" \
+  docker.io/library/mariadb:11.4 >/dev/null
+
+printf "MariaDB container '%s' was created on port %s.\n" \
+  "${DB_CONTAINER_NAME}" "${DB_PORT}"
