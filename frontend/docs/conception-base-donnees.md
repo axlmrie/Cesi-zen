@@ -11,6 +11,7 @@ erDiagram
   USER ||--o{ PAGE_INFO : redige
   USER ||--o{ RESULTAT_DIAGNOSTIC : realise
   USER ||--o{ JOURNAL_EMOTION : renseigne
+  USER ||--o{ SUPPORT_TICKET : ouvre
   RESULTAT_DIAGNOSTIC ||--o{ REPONSE_DIAGNOSTIC : contient
   EVENEMENT_STRESS ||--o{ REPONSE_DIAGNOSTIC : selectionne
   EMOTION_NIVEAU_1 ||--o{ EMOTION_NIVEAU_2 : regroupe
@@ -55,6 +56,14 @@ erDiagram
     string notePersonnelle
     datetime dateEnregistrement
   }
+  SUPPORT_TICKET {
+    string id PK
+    int glpiTicketId UK
+    string category
+    string subject
+    int statusCode
+    datetime lastSyncedAt
+  }
   EXERCICE_RESPIRATION {
     string id PK
     int inspirationSec
@@ -79,6 +88,7 @@ erDiagram
 | `emotion_niveau_1`     | `id`                        | -                                                                            | Familles d'emotions.                                                             |
 | `emotion_niveau_2`     | `id`                        | `emotionN1Id -> emotion_niveau_1.id`                                         | Emotions detaillees disponibles dans le journal.                                 |
 | `journal_emotion`      | `id`                        | `utilisateurId -> user.id`, `emotionN2Id -> emotion_niveau_2.id`             | Journal d'emotions utilisateur.                                                  |
+| `support_ticket`       | `id`                        | `utilisateurId -> user.id`                                                   | Correspondance locale entre un utilisateur CESIZen et son ticket GLPI.           |
 | `exercice_respiration` | `id`                        | -                                                                            | Exercices de respiration proposes aux visiteurs.                                 |
 
 ## Choix de modelisation
@@ -87,3 +97,4 @@ erDiagram
 - Les contenus informationnels sont separes des menus pour permettre a l'administrateur de publier une page sans l'exposer automatiquement dans la navigation.
 - Les reponses diagnostic utilisent une table d'association afin de conserver le detail des evenements coches, pas seulement le score final.
 - Les emotions sont hierarchisees en deux niveaux pour respecter la fonctionnalite de configuration demandee au back-office.
+- `support_ticket.glpiTicketId` est unique : GLPI reste la source de verite du ticket, tandis que MariaDB conserve l'appartenance utilisateur, la categorie et le dernier statut synchronise. La relation utilisateur est en cascade et l'anonymisation RGPD supprime explicitement ces correspondances locales.

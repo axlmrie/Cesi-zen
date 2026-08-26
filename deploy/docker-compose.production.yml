@@ -46,6 +46,7 @@ services:
     networks:
       - cesizen-backend
       - database
+      - glpi-api
     stop_grace_period: 30s
     healthcheck:
       test:
@@ -75,3 +76,6 @@ networks:
   database:
     external: true
     name: "${DATABASE_NETWORK:-db-tier}"
+  glpi-api:
+    external: true
+    name: "${GLPI_NETWORK:-support-tier}"

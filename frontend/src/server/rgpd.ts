@@ -21,6 +21,9 @@ export function deleteAndAnonymizeUserAccount(userId: string) {
     await transaction.resultatDiagnostic.deleteMany({
       where: { utilisateurId: userId },
     });
+    await transaction.supportTicket.deleteMany({
+      where: { utilisateurId: userId },
+    });
     await transaction.session.deleteMany({ where: { userId } });
     await transaction.account.deleteMany({ where: { userId } });
 
