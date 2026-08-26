@@ -8,6 +8,11 @@ const userId = `smoke-user-${suffix}`;
 const sessionId = `smoke-session-${suffix}`;
 const accountId = `smoke-account-${suffix}`;
 const verificationId = `smoke-verification-${suffix}`;
+const supportTicketId = `smoke-support-${suffix}`;
+const glpiTicketId = Number.parseInt(
+  suffix.replaceAll("-", "").slice(0, 7),
+  16,
+);
 const longValue = "m".repeat(512);
 
 async function main() {
@@ -57,6 +62,16 @@ async function main() {
             expiresAt: new Date(Date.now() + 60_000),
           },
         });
+
+        await transaction.supportTicket.create({
+          data: {
+            id: supportTicketId,
+            glpiTicketId,
+            category: "TECHNICAL",
+            subject: "MariaDB support-ticket smoke test",
+            utilisateurId: userId,
+          },
+        });
       },
       { isolationLevel: "Serializable" },
     );
@@ -81,12 +96,18 @@ async function main() {
 
     await db.user.delete({ where: { id: userId } });
 
-    const [remainingSessions, remainingAccounts] = await Promise.all([
-      db.session.count({ where: { userId } }),
-      db.account.count({ where: { userId } }),
-    ]);
+    const [remainingSessions, remainingAccounts, remainingSupportTickets] =
+      await Promise.all([
+        db.session.count({ where: { userId } }),
+        db.account.count({ where: { userId } }),
+        db.supportTicket.count({ where: { utilisateurId: userId } }),
+      ]);
 
-    if (remainingSessions !== 0 || remainingAccounts !== 0) {
+    if (
+      remainingSessions !== 0 ||
+      remainingAccounts !== 0 ||
+      remainingSupportTickets !== 0
+    ) {
       throw new Error("MariaDB did not apply the expected cascade deletes.");
     }
 

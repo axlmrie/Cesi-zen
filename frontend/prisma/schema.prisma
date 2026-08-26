@@ -22,6 +22,14 @@ enum Role {
   ADMIN
 }
 
+enum SupportCategory {
+  ACCOUNT
+  TECHNICAL
+  USAGE
+  PRIVACY
+  OTHER
+}
+
 model User {
   id            String  @id @default(uuid())
   name          String // Requis par Better Auth (concaténation automatique)
@@ -50,6 +58,7 @@ model User {
   pagesRedigees       PageInfo[]
   resultatsDiagnostic ResultatDiagnostic[]
   journalEmotions     JournalEmotion[]
+  supportTickets      SupportTicket[]
 
   @@map("user")
 }
@@ -195,6 +204,22 @@ model JournalEmotion {
   emotionN2          EmotionNiveau2 @relation(fields: [emotionN2Id], references: [id])
 
   @@map("journal_emotion")
+}
+
+model SupportTicket {
+  id            String          @id @default(uuid())
+  glpiTicketId  Int             @unique
+  category      SupportCategory
+  subject       String
+  statusCode    Int             @default(1)
+  lastSyncedAt  DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  utilisateurId String
+  utilisateur   User            @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@index([utilisateurId, createdAt])
+  @@map("support_ticket")
 }
 
 model ExerciceRespiration {

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   responseDeleteMany: vi.fn(),
   resultDeleteMany: vi.fn(),
   sessionDeleteMany: vi.fn(),
+  supportTicketDeleteMany: vi.fn(),
   transaction: vi.fn(),
   userCount: vi.fn(),
   userFindUnique: vi.fn(),
@@ -28,6 +29,7 @@ const transactionClient = {
   reponseDiagnostic: { deleteMany: mocks.responseDeleteMany },
   resultatDiagnostic: { deleteMany: mocks.resultDeleteMany },
   session: { deleteMany: mocks.sessionDeleteMany },
+  supportTicket: { deleteMany: mocks.supportTicketDeleteMany },
   user: {
     count: mocks.userCount,
     findUnique: mocks.userFindUnique,
@@ -54,6 +56,7 @@ describe("transactional RGPD account deletion", () => {
       mocks.responseDeleteMany,
       mocks.resultDeleteMany,
       mocks.sessionDeleteMany,
+      mocks.supportTicketDeleteMany,
     ]) {
       operation.mockResolvedValue({ count: 1 });
     }
@@ -73,6 +76,9 @@ describe("transactional RGPD account deletion", () => {
       where: { resultat: { utilisateurId: "user-123" } },
     });
     expect(mocks.resultDeleteMany).toHaveBeenCalledWith({
+      where: { utilisateurId: "user-123" },
+    });
+    expect(mocks.supportTicketDeleteMany).toHaveBeenCalledWith({
       where: { utilisateurId: "user-123" },
     });
     expect(mocks.sessionDeleteMany).toHaveBeenCalledWith({

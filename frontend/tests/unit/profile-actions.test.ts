@@ -108,6 +108,7 @@ describe("profile server actions", () => {
       id: "user-123",
       resultatsDiagnostic: [],
       journalEmotions: [],
+      supportTickets: [],
     };
     mocks.userFindUnique.mockResolvedValue(exportedData);
 
@@ -120,6 +121,7 @@ describe("profile server actions", () => {
       include: {
         resultatsDiagnostic: true,
         journalEmotions: true,
+        supportTickets: true,
       },
     });
   });

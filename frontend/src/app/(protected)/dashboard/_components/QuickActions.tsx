@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { ClipboardCheck, BookOpen, Wind, ArrowRight } from "lucide-react";
+import {
+  ClipboardCheck,
+  BookOpen,
+  Wind,
+  ArrowRight,
+  LifeBuoy,
+} from "lucide-react";
 
 const actions = [
   {
@@ -22,6 +28,13 @@ const actions = [
     href: "/respiration",
     icon: Wind,
     color: "bg-teal-500",
+  },
+  {
+    title: "Support",
+    desc: "Créer et suivre une demande d’aide",
+    href: "/support",
+    icon: LifeBuoy,
+    color: "bg-violet-500",
   },
 ];
 

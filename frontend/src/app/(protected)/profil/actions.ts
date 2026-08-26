@@ -108,6 +108,7 @@ export async function exportUserData() {
     include: {
       resultatsDiagnostic: true,
       journalEmotions: true,
+      supportTickets: true,
     },
   });
 

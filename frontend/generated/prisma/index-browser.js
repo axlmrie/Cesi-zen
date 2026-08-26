@@ -230,6 +230,18 @@ exports.Prisma.JournalEmotionScalarFieldEnum = {
   emotionN2Id: 'emotionN2Id'
 };
 
+exports.Prisma.SupportTicketScalarFieldEnum = {
+  id: 'id',
+  glpiTicketId: 'glpiTicketId',
+  category: 'category',
+  subject: 'subject',
+  statusCode: 'statusCode',
+  lastSyncedAt: 'lastSyncedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  utilisateurId: 'utilisateurId'
+};
+
 exports.Prisma.ExerciceRespirationScalarFieldEnum = {
   id: 'id',
   titre: 'titre',
@@ -333,6 +345,12 @@ exports.Prisma.JournalEmotionOrderByRelevanceFieldEnum = {
   emotionN2Id: 'emotionN2Id'
 };
 
+exports.Prisma.SupportTicketOrderByRelevanceFieldEnum = {
+  id: 'id',
+  subject: 'subject',
+  utilisateurId: 'utilisateurId'
+};
+
 exports.Prisma.ExerciceRespirationOrderByRelevanceFieldEnum = {
   id: 'id',
   titre: 'titre',
@@ -341,6 +359,14 @@ exports.Prisma.ExerciceRespirationOrderByRelevanceFieldEnum = {
 exports.Role = exports.$Enums.Role = {
   USER: 'USER',
   ADMIN: 'ADMIN'
+};
+
+exports.SupportCategory = exports.$Enums.SupportCategory = {
+  ACCOUNT: 'ACCOUNT',
+  TECHNICAL: 'TECHNICAL',
+  USAGE: 'USAGE',
+  PRIVACY: 'PRIVACY',
+  OTHER: 'OTHER'
 };
 
 exports.Prisma.ModelName = {
@@ -356,6 +382,7 @@ exports.Prisma.ModelName = {
   EmotionNiveau1: 'EmotionNiveau1',
   EmotionNiveau2: 'EmotionNiveau2',
   JournalEmotion: 'JournalEmotion',
+  SupportTicket: 'SupportTicket',
   ExerciceRespiration: 'ExerciceRespiration'
 };
 

@@ -7,6 +7,8 @@ Nginx Proxy Manager (NPM) ne cible jamais directement le conteneur applicatif :
 Internet -> Nginx Proxy Manager -> cesizen-router:8080
                                       |-- cesizen-web:3000 (réseau privé Compose)
                                       `-- maintenance-web:80 (conteneur externe existant)
+
+cesizen-web -> glpi:80 (réseau externe support-tier, API serveur uniquement)
 ```
 
 Le routeur reste attaché au réseau Docker externe de NPM pendant le remplacement de
@@ -110,13 +112,43 @@ Redéployer ensuite NPM avec ce réseau et utiliser exactement son nom dans
 `NPM_NETWORK`. Le Compose CesiZen y connecte `cesizen-router`. À chaque bascule, le
 script vérifie aussi le conteneur de maintenance existant, le démarre si nécessaire
 et le connecte à ce même réseau de façon idempotente. Il ne le crée, ne le recrée et
-ne l'arrête jamais. `cesizen-web` rejoint uniquement le réseau privé du projet et le
-réseau MariaDB externe ; le routeur n'accède pas à la base.
+ne l'arrête jamais. `cesizen-web` rejoint le réseau privé du projet, le réseau
+MariaDB externe et le réseau GLPI externe ; le routeur n'accède ni à la base ni à
+GLPI.
 
 Le réseau MariaDB partagé doit lui aussi exister avant le déploiement :
 
 ```bash
 docker network inspect db-tier >/dev/null
+```
+
+Créer une fois le réseau privé d'intégration GLPI, puis le déclarer comme réseau
+externe dans les Compose GLPI et CesiZen :
+
+```bash
+docker network create support-tier
+```
+
+Exemple à ajouter au Compose qui gère le conteneur `glpi` :
+
+```yaml
+services:
+  glpi:
+    networks:
+      - default
+      - support-tier
+
+networks:
+  support-tier:
+    external: true
+```
+
+Le nom DNS `glpi` devient alors résolvable depuis `cesizen-web` sans publier le port
+80 sur l'hôte. Vérifier les deux rattachements avant le premier déploiement :
+
+```bash
+docker network inspect support-tier \
+  --format '{{range .Containers}}{{println .Name}}{{end}}'
 ```
 
 Le conteneur externe doit déjà servir la page de maintenance sur le port configuré.
@@ -150,6 +182,7 @@ Modifier `.env.deploy` :
   ou digest ; un digest ou un tag de commit immuable est recommandé ;
 - `NPM_NETWORK` doit être le réseau externe préparé ci-dessus ;
 - `DATABASE_NETWORK` doit être le réseau externe partagé avec MariaDB (`db-tier`) ;
+- `GLPI_NETWORK` doit être le réseau externe partagé avec GLPI (`support-tier`) ;
 - `MAINTENANCE_CONTAINER` est le nom du conteneur de maintenance existant
   (`maintenance-web` par défaut) ;
 - `MAINTENANCE_PORT` est son port HTTP interne (`80` par défaut) ;
@@ -163,6 +196,58 @@ afficher :
 - une `DATABASE_URL` MariaDB au format `mysql://...` ;
 - un `BETTER_AUTH_SECRET` d'au moins 32 caractères ;
 - un `BETTER_AUTH_URL` public en HTTPS.
+
+L'intégration support GLPI est facultative. Pour la désactiver, laisser toutes les
+variables `GLPI_*` vides ou absentes. Pour l'activer, renseigner ensemble :
+
+- `GLPI_API_URL`, de préférence l'URL Docker interne
+  `http://glpi/apirest.php` ;
+- `GLPI_APP_TOKEN` et `GLPI_USER_TOKEN`, issus d'un compte technique GLPI aux droits
+  minimaux ;
+- `GLPI_CATEGORY_ACCOUNT_ID`, `GLPI_CATEGORY_TECHNICAL_ID`,
+  `GLPI_CATEGORY_USAGE_ID`, `GLPI_CATEGORY_PRIVACY_ID` et
+  `GLPI_CATEGORY_OTHER_ID`, tous sous forme d'entiers strictement positifs ;
+- `GLPI_TIMEOUT_MS`, facultatif, compris entre 100 et 60000 millisecondes.
+
+Les jetons restent exclusivement dans `.env.production` (mode 0600) et ne sont
+jamais transmis au navigateur, placés dans `.env.deploy` ou enregistrés comme sortie
+du pipeline. Le script refuse une configuration GLPI partielle, des placeholders et
+des identifiants de catégorie invalides ou dupliqués.
+
+### 3.1. Préparer GLPI pour CESIZen
+
+Cette intégration utilise l'API REST historique de GLPI (`/apirest.php`), car c'est
+elle qui accepte le couple App-Token / User-Token. Dans **Configuration > Générale >
+API**, activer l'API REST historique et l'authentification par jeton externe, puis :
+
+1. créer un client API actif nommé par exemple `CESIZen`, récupérer son App-Token et,
+   si une restriction IP est configurée, autoriser le sous-réseau Docker de
+   `support-tier` ;
+2. créer un utilisateur technique dédié `cesizen-api`, limité à l'entité qui recevra
+   les demandes, puis générer sa clé d'accès distante (User-Token) ;
+3. attribuer à son profil uniquement les droits **créer un ticket** et **voir ses
+   propres tickets**. Ne pas lui accorder les droits de voir tous les tickets,
+   d'administrer, d'affecter, de supprimer ou de purger ;
+4. créer cinq catégories ITIL et reporter leurs IDs numériques dans les variables :
+   `Compte et connexion`, `Problème technique`, `Utilisation de CESIZen`,
+   `Données personnelles` et `Autre demande` ;
+5. conserver le compte dans une entité unique. Comme les IDs sont configurés côté
+   serveur, aucun droit de modification des catégories n'est nécessaire.
+
+Le navigateur ne contacte jamais GLPI : `cesizen-web` ouvre une session API courte,
+crée ou lit les tickets, puis la ferme. Une table MariaDB associe chaque numéro GLPI à
+l'utilisateur CESIZen propriétaire ; aucune route n'accepte un numéro arbitraire du
+navigateur. Le compte technique partagé ne doit donc jamais être utilisé manuellement
+pour créer des tickets qui seraient présentés comme appartenant à un utilisateur.
+
+L'intégration actuelle affiche l'état d'avancement mais pas les suivis/commentaires
+GLPI. Aucun droit sur les suivis n'est donc requis. Si cette fonction est ajoutée plus
+tard, n'autoriser que la lecture des suivis publics et filtrer systématiquement ceux
+marqués privés.
+
+Ne pas utiliser l'URL publique `http://glpi-zen.duckdns.org` pour les jetons : HTTP ne
+les chiffre pas. Utiliser `http://glpi/apirest.php` sur `support-tier`, ou une URL
+publique HTTPS correctement certifiée si le réseau interne n'est pas disponible.
 
 L'URL MariaDB suit le format `mysql://USER:PASSWORD@HOST:3306/DATABASE`. Encoder
 en pourcentage les caractères réservés du nom d'utilisateur et du mot de passe
@@ -221,12 +306,14 @@ moment du déploiement. `npm` et `npx` sont retirés de l'image finale afin de r
 surface d'attaque. Prisma découvre alors `/app/prisma/schema.prisma` et son historique
 automatiquement.
 
-Le conteneur `cesizen-web` rejoint le réseau Docker externe défini par
-`DATABASE_NETWORK` (`db-tier` par défaut). Le conteneur MariaDB partagé doit rejoindre
-ce même réseau ; `DATABASE_URL` utilise alors son nom DNS Docker, par exemple
-`mariadb-shared`, et jamais une adresse IP de conteneur. Il n'est pas nécessaire de
-publier le port 3306 sur l'hôte. L'utilisateur de `DATABASE_URL` doit posséder les
-droits DDL sur la seule base CESIZen pour permettre les migrations Prisma.
+Le conteneur `cesizen-web` rejoint les réseaux Docker externes définis par
+`DATABASE_NETWORK` (`db-tier` par défaut) et `GLPI_NETWORK` (`support-tier` par
+défaut). Le conteneur MariaDB partagé doit rejoindre le premier et le conteneur GLPI
+le second. `DATABASE_URL` utilise le nom DNS Docker de MariaDB, par exemple
+`mariadb-shared`, et `GLPI_API_URL` utilise celui de GLPI. Aucune adresse IP de
+conteneur ne doit être enregistrée et il n'est pas nécessaire de publier les ports
+3306 ou 80 sur l'hôte. L'utilisateur de `DATABASE_URL` doit posséder les droits DDL
+sur la seule base CESIZen pour permettre les migrations Prisma.
 
 L'ordre appliqué est le suivant :
 

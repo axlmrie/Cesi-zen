@@ -14,6 +14,7 @@ import {
   LogOut,
   User,
   ShieldCheck,
+  LifeBuoy,
 } from "lucide-react";
 
 type MenuItem = {
@@ -26,6 +27,7 @@ const reservedMenuUrls = new Set([
   "/journal",
   "/diagnostic",
   "/respiration",
+  "/support",
   "/profil",
   "/admin",
 ]);
@@ -90,6 +92,12 @@ export function NavbarPrivate({
             className="text-muted-foreground hover:text-brand flex items-center gap-2 text-sm font-medium whitespace-nowrap transition-colors"
           >
             <ClipboardCheck className="h-4 w-4" /> Test de stress
+          </Link>
+          <Link
+            href="/support"
+            className="text-muted-foreground hover:text-brand flex items-center gap-2 text-sm font-medium whitespace-nowrap transition-colors"
+          >
+            <LifeBuoy className="h-4 w-4" /> Support
           </Link>
           {menuLinks.map((item) => (
             <Link
@@ -184,6 +192,13 @@ export function NavbarPrivate({
             className="text-muted-foreground hover:text-brand flex items-center gap-3 text-lg font-medium"
           >
             <ClipboardCheck className="text-brand h-5 w-5" /> Test de stress
+          </Link>
+          <Link
+            href="/support"
+            onClick={closeMenu}
+            className="text-muted-foreground hover:text-brand flex items-center gap-3 text-lg font-medium"
+          >
+            <LifeBuoy className="text-brand h-5 w-5" /> Support
           </Link>
           {menuLinks.map((item) => (
             <Link

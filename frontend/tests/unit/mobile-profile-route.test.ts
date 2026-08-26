@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   resultDeleteMany: vi.fn(),
   responseDeleteMany: vi.fn(),
   sessionDeleteMany: vi.fn(),
+  supportTicketDeleteMany: vi.fn(),
   transaction: vi.fn(),
   userCount: vi.fn(),
   userFindUnique: vi.fn(),
@@ -32,6 +33,7 @@ vi.mock("@/server/db", () => ({
     reponseDiagnostic: { deleteMany: mocks.responseDeleteMany },
     resultatDiagnostic: { deleteMany: mocks.resultDeleteMany },
     session: { deleteMany: mocks.sessionDeleteMany },
+    supportTicket: { deleteMany: mocks.supportTicketDeleteMany },
     user: {
       count: mocks.userCount,
       findUnique: mocks.userFindUnique,
@@ -71,6 +73,7 @@ describe("mobile profile route", () => {
       mocks.resultDeleteMany,
       mocks.responseDeleteMany,
       mocks.sessionDeleteMany,
+      mocks.supportTicketDeleteMany,
       mocks.userUpdate,
     ]) {
       operation.mockResolvedValue({ count: 1 });
@@ -83,6 +86,7 @@ describe("mobile profile route", () => {
         reponseDiagnostic: { deleteMany: mocks.responseDeleteMany },
         resultatDiagnostic: { deleteMany: mocks.resultDeleteMany },
         session: { deleteMany: mocks.sessionDeleteMany },
+        supportTicket: { deleteMany: mocks.supportTicketDeleteMany },
         user: {
           count: mocks.userCount,
           findUnique: mocks.userFindUnique,
@@ -192,6 +196,9 @@ describe("mobile profile route", () => {
     });
     expect(mocks.accountDeleteMany).toHaveBeenCalledWith({
       where: { userId: "user-123" },
+    });
+    expect(mocks.supportTicketDeleteMany).toHaveBeenCalledWith({
+      where: { utilisateurId: "user-123" },
     });
     expect(mocks.userUpdate).toHaveBeenCalledWith({
       where: { id: "user-123" },

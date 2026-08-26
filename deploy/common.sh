@@ -52,8 +52,9 @@ resolve_existing_file() {
 is_supported_deploy_key() {
   case "$1" in
     CESIZEN_IMAGE | COMPOSE_PROJECT_NAME | DATABASE_NETWORK | DEPLOY_HEALTH_INTERVAL | \
-      DEPLOY_HEALTH_TIMEOUT | INFRA_HEALTH_TIMEOUT | MAINTENANCE_CONTAINER | \
-      MAINTENANCE_PORT | NGINX_IMAGE | NPM_NETWORK | PRODUCTION_ENV_FILE)
+      DEPLOY_HEALTH_TIMEOUT | GLPI_NETWORK | INFRA_HEALTH_TIMEOUT | \
+      MAINTENANCE_CONTAINER | MAINTENANCE_PORT | NGINX_IMAGE | NPM_NETWORK | \
+      PRODUCTION_ENV_FILE)
       return 0
       ;;
     *)
@@ -172,6 +173,28 @@ validate_unique_env_assignment() {
   fi
 }
 
+validate_optional_unique_env_assignment() {
+  local key_to_find="$1"
+  local env_file="$2"
+  local line key assignment_count=0
+
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    line="${line%$'\r'}"
+    line="$(trim_whitespace "${line}")"
+
+    if [[ "${line}" =~ ^(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)= ]]; then
+      key="${BASH_REMATCH[2]}"
+      if [[ "${key}" == "${key_to_find}" ]]; then
+        assignment_count=$((assignment_count + 1))
+      fi
+    fi
+  done <"${env_file}"
+
+  if ((assignment_count > 1)); then
+    die "${key_to_find} is defined more than once in ${env_file}."
+  fi
+}
+
 validate_positive_integer() {
   local variable_name="$1"
   local value="$2"
@@ -182,14 +205,37 @@ validate_positive_integer() {
 
 validate_production_environment() {
   local database_url auth_secret auth_url permissions group_bits other_bits
+  local glpi_api_url glpi_app_token glpi_user_token glpi_timeout_ms
+  local glpi_category_account_id glpi_category_technical_id
+  local glpi_category_usage_id glpi_category_privacy_id glpi_category_other_id
+  local glpi_enabled=false category_id
+  local -A seen_glpi_category_ids=()
 
   validate_unique_env_assignment DATABASE_URL "${PRODUCTION_ENV_FILE}"
   validate_unique_env_assignment BETTER_AUTH_SECRET "${PRODUCTION_ENV_FILE}"
   validate_unique_env_assignment BETTER_AUTH_URL "${PRODUCTION_ENV_FILE}"
+  validate_optional_unique_env_assignment GLPI_API_URL "${PRODUCTION_ENV_FILE}"
+  validate_optional_unique_env_assignment GLPI_APP_TOKEN "${PRODUCTION_ENV_FILE}"
+  validate_optional_unique_env_assignment GLPI_USER_TOKEN "${PRODUCTION_ENV_FILE}"
+  validate_optional_unique_env_assignment GLPI_TIMEOUT_MS "${PRODUCTION_ENV_FILE}"
+  validate_optional_unique_env_assignment GLPI_CATEGORY_ACCOUNT_ID "${PRODUCTION_ENV_FILE}"
+  validate_optional_unique_env_assignment GLPI_CATEGORY_TECHNICAL_ID "${PRODUCTION_ENV_FILE}"
+  validate_optional_unique_env_assignment GLPI_CATEGORY_USAGE_ID "${PRODUCTION_ENV_FILE}"
+  validate_optional_unique_env_assignment GLPI_CATEGORY_PRIVACY_ID "${PRODUCTION_ENV_FILE}"
+  validate_optional_unique_env_assignment GLPI_CATEGORY_OTHER_ID "${PRODUCTION_ENV_FILE}"
 
   database_url="$(read_env_assignment DATABASE_URL "${PRODUCTION_ENV_FILE}")"
   auth_secret="$(read_env_assignment BETTER_AUTH_SECRET "${PRODUCTION_ENV_FILE}")"
   auth_url="$(read_env_assignment BETTER_AUTH_URL "${PRODUCTION_ENV_FILE}")"
+  glpi_api_url="$(read_env_assignment GLPI_API_URL "${PRODUCTION_ENV_FILE}" || true)"
+  glpi_app_token="$(read_env_assignment GLPI_APP_TOKEN "${PRODUCTION_ENV_FILE}" || true)"
+  glpi_user_token="$(read_env_assignment GLPI_USER_TOKEN "${PRODUCTION_ENV_FILE}" || true)"
+  glpi_timeout_ms="$(read_env_assignment GLPI_TIMEOUT_MS "${PRODUCTION_ENV_FILE}" || true)"
+  glpi_category_account_id="$(read_env_assignment GLPI_CATEGORY_ACCOUNT_ID "${PRODUCTION_ENV_FILE}" || true)"
+  glpi_category_technical_id="$(read_env_assignment GLPI_CATEGORY_TECHNICAL_ID "${PRODUCTION_ENV_FILE}" || true)"
+  glpi_category_usage_id="$(read_env_assignment GLPI_CATEGORY_USAGE_ID "${PRODUCTION_ENV_FILE}" || true)"
+  glpi_category_privacy_id="$(read_env_assignment GLPI_CATEGORY_PRIVACY_ID "${PRODUCTION_ENV_FILE}" || true)"
+  glpi_category_other_id="$(read_env_assignment GLPI_CATEGORY_OTHER_ID "${PRODUCTION_ENV_FILE}" || true)"
 
   [[ "${database_url}" == mysql://* ]] || \
     die "DATABASE_URL must use the mysql:// scheme required by Prisma for MariaDB."
@@ -207,6 +253,56 @@ validate_production_environment() {
   if [[ "${database_url}" == *REPLACE_* || "${database_url}" == *DATABASE_HOST* || \
     "${auth_secret}" == *REPLACE_* || "${auth_url}" == *example.org* ]]; then
     die "Production placeholders remain in ${PRODUCTION_ENV_FILE}."
+  fi
+
+  if [[ -n "${glpi_api_url}" || -n "${glpi_app_token}" || \
+    -n "${glpi_user_token}" || -n "${glpi_category_account_id}" || \
+    -n "${glpi_category_technical_id}" || -n "${glpi_category_usage_id}" || \
+    -n "${glpi_category_privacy_id}" || -n "${glpi_category_other_id}" || \
+    -n "${glpi_timeout_ms}" ]]; then
+    glpi_enabled=true
+  fi
+
+  if [[ "${glpi_enabled}" == true ]]; then
+    [[ -n "${glpi_api_url}" && -n "${glpi_app_token}" && \
+      -n "${glpi_user_token}" && -n "${glpi_category_account_id}" && \
+      -n "${glpi_category_technical_id}" && -n "${glpi_category_usage_id}" && \
+      -n "${glpi_category_privacy_id}" && -n "${glpi_category_other_id}" ]] || \
+      die "GLPI support configuration is partial; URL, tokens and all category IDs are required together."
+
+    [[ "${glpi_api_url}" =~ ^https?://[^[:space:]]+$ ]] || \
+      die "GLPI_API_URL must be an absolute HTTP or HTTPS URL."
+    [[ "${glpi_api_url%/}" == */apirest.php ]] && \
+      [[ "${glpi_api_url}" != *'?'* && "${glpi_api_url}" != *'#'* ]] || \
+      die "GLPI_API_URL must target the legacy /apirest.php endpoint."
+    [[ "${glpi_api_url}" != *'$'* ]] || \
+      die "GLPI_API_URL must be literal and must not use Compose interpolation."
+    [[ "${glpi_app_token}" != *'$'* && "${glpi_user_token}" != *'$'* ]] || \
+      die "GLPI tokens must be literal and must not use Compose interpolation."
+    [[ "${glpi_app_token}" != *REPLACE_* && \
+      "${glpi_user_token}" != *REPLACE_* && \
+      "${glpi_api_url}" != *example.* ]] || \
+      die "GLPI placeholders remain in ${PRODUCTION_ENV_FILE}."
+
+    for category_id in \
+      "${glpi_category_account_id}" \
+      "${glpi_category_technical_id}" \
+      "${glpi_category_usage_id}" \
+      "${glpi_category_privacy_id}" \
+      "${glpi_category_other_id}"; do
+      [[ "${category_id}" =~ ^[1-9][0-9]*$ ]] || \
+        die "Every GLPI category ID must be a positive integer."
+      [[ ! -v "seen_glpi_category_ids[${category_id}]" ]] || \
+        die "Every GLPI category ID must be distinct."
+      seen_glpi_category_ids["${category_id}"]=1
+    done
+  fi
+
+  if [[ -n "${glpi_timeout_ms}" ]]; then
+    if [[ ! "${glpi_timeout_ms}" =~ ^[1-9][0-9]*$ ]] || \
+      ((10#${glpi_timeout_ms} < 100 || 10#${glpi_timeout_ms} > 60000)); then
+      die "GLPI_TIMEOUT_MS must be between 100 and 60000 milliseconds."
+    fi
   fi
 
   if permissions="$(stat -c '%a' "${PRODUCTION_ENV_FILE}" 2>/dev/null)"; then
@@ -241,6 +337,7 @@ load_and_validate_environment() {
   : "${MAINTENANCE_CONTAINER:=maintenance-web}"
   : "${MAINTENANCE_PORT:=80}"
   : "${DATABASE_NETWORK:=db-tier}"
+  : "${GLPI_NETWORK:=support-tier}"
   : "${PRODUCTION_ENV_FILE:=.env.production}"
 
   : "${CESIZEN_IMAGE:?CESIZEN_IMAGE is required in .env.deploy or the process environment}"
@@ -252,6 +349,8 @@ load_and_validate_environment() {
     die "NPM_NETWORK contains unsupported characters."
   [[ "${DATABASE_NETWORK}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || \
     die "DATABASE_NETWORK contains unsupported characters."
+  [[ "${GLPI_NETWORK}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || \
+    die "GLPI_NETWORK contains unsupported characters."
   [[ "${COMPOSE_PROJECT_NAME}" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || \
     die "COMPOSE_PROJECT_NAME must use lowercase letters, digits, underscores or hyphens."
   [[ "${MAINTENANCE_CONTAINER}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || \
@@ -275,6 +374,7 @@ load_and_validate_environment() {
     die "PRODUCTION_ENV_FILE must resolve to a safe absolute Ubuntu path."
 
   export CESIZEN_IMAGE COMPOSE_PROJECT_NAME DATABASE_NETWORK DEPLOY_HEALTH_INTERVAL
+  export GLPI_NETWORK
   export DEPLOY_HEALTH_TIMEOUT INFRA_HEALTH_TIMEOUT MAINTENANCE_CONTAINER
   export MAINTENANCE_PORT NGINX_IMAGE NPM_NETWORK PRODUCTION_ENV_FILE
 
@@ -357,6 +457,8 @@ initialize_deploy_context() {
     die "External NPM network not found: ${NPM_NETWORK}"
   docker network inspect "${DATABASE_NETWORK}" >/dev/null 2>&1 || \
     die "External database network not found: ${DATABASE_NETWORK}"
+  docker network inspect "${GLPI_NETWORK}" >/dev/null 2>&1 || \
+    die "External GLPI network not found: ${GLPI_NETWORK}"
 
   assert_compose_container_ownership cesizen-router cesizen-router
   assert_compose_container_ownership cesizen-web cesizen-web
