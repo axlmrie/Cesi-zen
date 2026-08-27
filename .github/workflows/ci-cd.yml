@@ -445,7 +445,7 @@ jobs:
           docker run -d \
             --name cesizen-staging \
             --restart unless-stopped \
-            --network nginx-proxy-manager_default \
+            --network proxy-tier \
             "$IMAGE_REF"
 
       - name: Nettoyer l'authentification Docker
