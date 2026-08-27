@@ -410,6 +410,7 @@ jobs:
   deploy-staging:
     name: Deployer en Staging (Preview)
     needs:
+      - build-image
       - promote-latest
     runs-on: [self-hosted, prod]
     timeout-minutes: 15
@@ -455,7 +456,9 @@ jobs:
   # ==============================================================
   deploy-production:
     name: Deployer en production
-    needs: deploy-staging
+    needs: 
+        - build-image
+        - deploy-staging
     runs-on: [self-hosted, prod]
     timeout-minutes: 20
     permissions:
