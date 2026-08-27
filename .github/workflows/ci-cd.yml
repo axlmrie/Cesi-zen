@@ -416,7 +416,7 @@ jobs:
     timeout-minutes: 15
     environment:
       name: staging
-      url: https://preview.ton-domaine.fr # Pense à adapter cette URL
+      url: http://preview-cesizen.duckdns.org
     env:
       IMAGE_REF: ${{ needs.build-image.outputs.image_ref }}
       GHCR_TOKEN: ${{ github.token }}
