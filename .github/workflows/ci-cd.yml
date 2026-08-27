@@ -446,6 +446,7 @@ jobs:
             --name cesizen-staging \
             --restart unless-stopped \
             --network proxy-tier \
+            --env-file /opt/cesizen/deploy/.env.staging \
             "$IMAGE_REF"
 
       - name: Nettoyer l'authentification Docker
