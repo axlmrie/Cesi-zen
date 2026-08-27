@@ -404,20 +404,68 @@ jobs:
           [[ "$IMAGE_REF" == "$image_name"@sha256:* ]]
           docker buildx imagetools create --tag "$image_name:latest" "$IMAGE_REF"
 
-  deploy:
-    name: Deployer en production
+  # ==============================================================
+  # NOUVEAU JOB : DEPLOIEMENT EN STAGING (PREVIEW)
+  # ==============================================================
+  deploy-staging:
+    name: Deployer en Staging (Preview)
     needs:
-      - build-image
-      - image-security
       - promote-latest
-    # Ce runner dedie s'execute directement sur le serveur de production.
+    runs-on: [self-hosted, prod]
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: https://preview.ton-domaine.fr # Pense à adapter cette URL
+    env:
+      IMAGE_REF: ${{ needs.build-image.outputs.image_ref }}
+      GHCR_TOKEN: ${{ github.token }}
+      GHCR_USERNAME: ${{ github.actor }}
+
+    steps:
+      - name: Se connecter a GHCR
+        shell: bash
+        run: |
+          echo "$GHCR_TOKEN" | docker login ${{ env.REGISTRY }} -u "$GHCR_USERNAME" --password-stdin
+
+      - name: Lancer le conteneur de Staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          
+          # 1. Pull de l'image
+          docker pull "$IMAGE_REF"
+          
+          # 2. Supprimer l'ancienne preview
+          docker stop cesizen-staging || true
+          docker rm cesizen-staging || true
+          
+          # 3. Démarrer la nouvelle preview
+          # NOTE: Tu devras peut-être adapter le réseau (--network) ou monter des variables d'environnement
+          docker run -d \
+            --name cesizen-staging \
+            --restart unless-stopped \
+            "$IMAGE_REF"
+
+      - name: Nettoyer l'authentification Docker
+        if: always()
+        run: docker logout ${{ env.REGISTRY }} || true
+
+  # ==============================================================
+  # JOB MODIFIE : DEPLOIEMENT EN PRODUCTION (ATTEND LE CLIC MANUEL)
+  # ==============================================================
+  deploy-production:
+    name: Deployer en production
+    needs: deploy-staging
     runs-on: [self-hosted, prod]
     timeout-minutes: 20
     permissions:
       contents: read
       packages: read
+    
+    # 🔴 C'EST ICI QUE GITHUB VA METTRE EN PAUSE (si "Required reviewers" est activé) 🔴
     environment:
-      name: production
+      name: production 
+      
     concurrency:
       group: cesizen-production
       cancel-in-progress: false
@@ -460,8 +508,6 @@ jobs:
 
           echo "DEPLOY_PATH=$resolved_deploy_path" >> "$GITHUB_ENV"
 
-      # Les suppressions sont differees. Les regles protect/exclude conservent
-      # les secrets, le verrou et la route Nginx active sur le serveur.
       - name: Synchroniser la configuration versionnee
         shell: bash
         run: |
@@ -486,8 +532,6 @@ jobs:
 
           chmod 0750 "$DEPLOY_PATH" "$DEPLOY_PATH"/scripts/*.sh
 
-      # Le token GHCR en lecture seule est isole du profil Docker persistant du
-      # runner et supprime apres le deploiement, y compris en cas d'echec.
       - name: Mettre a jour le service local
         shell: bash
         env:
@@ -512,3 +556,11 @@ jobs:
 
           cd "$DEPLOY_PATH"
           ./scripts/deploy.sh "$IMAGE_REF"
+
+      # Optionnel : Détruire l'environnement de staging maintenant que la prod est en place
+      - name: Nettoyer le conteneur de Staging
+        if: success()
+        shell: bash
+        run: |
+          docker stop cesizen-staging || true
+          docker rm cesizen-staging || true
