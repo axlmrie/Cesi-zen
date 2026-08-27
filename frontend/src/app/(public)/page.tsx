@@ -8,7 +8,8 @@ export default function HomePage() {
           <div className="bg-brand-light/10 absolute inset-0 -z-10 rounded-b-[4rem] md:rounded-b-[6rem]"></div>
 
           <h1 className="font-heading text-brand-dark mb-6 max-w-3xl text-3xl font-bold text-balance sm:text-4xl md:text-6xl">
-            L'application de votre Test Ajout<br />
+            L'application de votre Test Ajout
+            <br />
             <span className="text-brand">santé mentale</span>
           </h1>
 
