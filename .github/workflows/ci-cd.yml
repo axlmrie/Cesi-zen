@@ -433,21 +433,22 @@ jobs:
         run: |
           set -euo pipefail
           
-          # 1. Pull de l'image
           docker pull "$IMAGE_REF"
           
-          # 2. Supprimer l'ancienne preview
           docker stop cesizen-staging || true
           docker rm cesizen-staging || true
           
-          # 3. Démarrer la nouvelle preview
-          # NOTE: Tu devras peut-être adapter le réseau (--network) ou monter des variables d'environnement
+          # 1. On démarre le conteneur sur le réseau proxy (pour Nginx)
           docker run -d \
             --name cesizen-staging \
             --restart unless-stopped \
             --network proxy-tier \
             --env-file /opt/cesizen/deploy/.env.staging \
             "$IMAGE_REF"
+            
+          # 2. On l'attache AUSSI au réseau de la base de données
+          # Remplace 'db-tier' par le vrai nom trouvé à l'étape 1 si différent
+          docker network connect db-tier cesizen-staging
 
       - name: Nettoyer l'authentification Docker
         if: always()
