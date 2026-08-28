@@ -8,12 +8,11 @@ export default function HomePage() {
           <div className="bg-brand-light/10 absolute inset-0 -z-10 rounded-b-[4rem] md:rounded-b-[6rem]"></div>
 
           <h1 className="font-heading text-brand-dark mb-6 max-w-3xl text-3xl font-bold text-balance sm:text-4xl md:text-6xl">
-            L'application de votre Test Ajout
+            L'application de votre 
             <br />
             <span className="text-brand">santé mentale</span>
           </h1>
 
-          {/* CORRECTION ICI : text-muted-foreground */}
           <p className="text-muted-foreground mb-8 max-w-2xl text-base leading-relaxed sm:text-lg md:text-xl">
             Évaluez votre niveau de stress, suivez vos émotions au quotidien et
             découvrez des exercices de respiration pour retrouver la sérénité.
